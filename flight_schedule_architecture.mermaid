@@ -1,0 +1,84 @@
+graph TB
+    subgraph Users["👥 Users"]
+        Student[Student]
+        Instructor[Instructor]
+        Admin[Admin]
+    end
+
+    subgraph Frontend["⚛️ Frontend - React + TypeScript"]
+        Browser[Browser]
+        Pages[Pages<br/>Login, Dashboard, Flights]
+        Components[Components<br/>Auth, Flight, Weather, Reschedule]
+        Store[Zustand Store<br/>Auth, Flights, Notifications]
+        FrontendServices[Services<br/>API Client, Auth, Flights]
+    end
+
+    subgraph Backend["🟢 Backend - Node.js + Express"]
+        API[Express API Server<br/>Port 3000]
+        Middleware[Middleware<br/>Auth, CORS, Validation]
+        Routes[Routes<br/>auth, flights, students, weather]
+        Controllers[Controllers<br/>Business Logic]
+        BackendServices[Services<br/>Auth, Weather, AI, Notifications]
+        CronJob[Cron Job<br/>Hourly Weather Check]
+    end
+
+    subgraph Database["🗄️ Database"]
+        Prisma[Prisma ORM]
+        PostgreSQL[(PostgreSQL<br/>Docker)]
+        Tables[Tables<br/>users, students, flights<br/>weather_checks, notifications]
+    end
+
+    subgraph ExternalAPIs["🌐 External APIs"]
+        OpenWeather[OpenWeatherMap API<br/>Weather Data]
+        OpenAI[OpenAI API<br/>GPT-4o Rescheduling]
+        Email[Email Service<br/>Nodemailer]
+    end
+
+    subgraph AWS["☁️ AWS Production"]
+        EC2[EC2/Elastic Beanstalk<br/>Backend]
+        RDS[RDS PostgreSQL<br/>Database]
+        S3[S3 + CloudFront<br/>Frontend]
+    end
+
+    Student --> Browser
+    Instructor --> Browser
+    Admin --> Browser
+    
+    Browser --> Pages
+    Pages --> Components
+    Components --> Store
+    Components --> FrontendServices
+    FrontendServices --> API
+    
+    API --> Middleware
+    Middleware --> Routes
+    Routes --> Controllers
+    Controllers --> BackendServices
+    
+    BackendServices --> Prisma
+    Prisma --> PostgreSQL
+    PostgreSQL --> Tables
+    
+    BackendServices --> OpenWeather
+    BackendServices --> OpenAI
+    BackendServices --> Email
+    
+    CronJob --> BackendServices
+    
+    S3 -.Production.-> Browser
+    EC2 -.Production.-> API
+    RDS -.Production.-> PostgreSQL
+
+    classDef userStyle fill:#e1bee7,stroke:#8e24aa,stroke-width:2px
+    classDef frontendStyle fill:#b3e5fc,stroke:#0277bd,stroke-width:2px
+    classDef backendStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+    classDef dbStyle fill:#bbdefb,stroke:#1565c0,stroke-width:2px
+    classDef externalStyle fill:#ffe0b2,stroke:#e65100,stroke-width:2px
+    classDef awsStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+
+    class Student,Instructor,Admin userStyle
+    class Browser,Pages,Components,Store,FrontendServices frontendStyle
+    class API,Middleware,Routes,Controllers,BackendServices,CronJob backendStyle
+    class Prisma,PostgreSQL,Tables dbStyle
+    class OpenWeather,OpenAI,Email externalStyle
+    class EC2,RDS,S3 awsStyle
