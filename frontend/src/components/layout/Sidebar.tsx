@@ -5,6 +5,8 @@ import {
   Plane, 
   Cloud, 
   Users, 
+  UserCheck,
+  Calendar,
   Settings 
 } from 'lucide-react';
 
@@ -32,10 +34,21 @@ const navItems: NavItem[] = [
     icon: Cloud,
   },
   {
+    path: '/calendar',
+    label: 'Calendar',
+    icon: Calendar,
+  },
+  {
     path: '/students',
     label: 'Students',
     icon: Users,
     roles: ['ADMIN', 'INSTRUCTOR'],
+  },
+  {
+    path: '/instructors',
+    label: 'Instructors',
+    icon: UserCheck,
+    roles: ['ADMIN'],
   },
   {
     path: '/settings',

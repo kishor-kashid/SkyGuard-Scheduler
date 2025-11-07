@@ -27,10 +27,6 @@ export function Login() {
         <Card title="Sign In">
           <LoginForm />
         </Card>
-
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Demo credentials: admin@flightpro.com / password123
-        </p>
       </div>
     </div>
   );

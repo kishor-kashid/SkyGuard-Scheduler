@@ -8,6 +8,39 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Flights } from './pages/Flights';
 import { Weather } from './pages/Weather';
+import { Students } from './pages/Students';
+import { Instructors } from './pages/Instructors';
+import { Calendar } from './pages/Calendar';
+
+// Students route component - only accessible to ADMIN and INSTRUCTOR
+function StudentsRoute() {
+  const { user } = useAuthStore();
+  
+  if (user?.role !== 'ADMIN' && user?.role !== 'INSTRUCTOR') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return (
+    <Layout>
+      <Students />
+    </Layout>
+  );
+}
+
+// Instructors route component - only accessible to ADMIN
+function InstructorsRoute() {
+  const { user } = useAuthStore();
+  
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return (
+    <Layout>
+      <Instructors />
+    </Layout>
+  );
+}
 
 function App() {
   const { checkAuth, isAuthenticated } = useAuthStore();
@@ -62,6 +95,35 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Weather />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/students"
+          element={
+            <ProtectedRoute>
+              <StudentsRoute />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/instructors"
+          element={
+            <ProtectedRoute>
+              <InstructorsRoute />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Calendar />
               </Layout>
             </ProtectedRoute>
           }

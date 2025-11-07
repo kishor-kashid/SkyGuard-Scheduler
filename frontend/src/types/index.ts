@@ -33,6 +33,16 @@ export interface Student {
   email?: string;
 }
 
+// Instructor Types
+export interface Instructor {
+  id: number;
+  userId: number;
+  name: string;
+  phone?: string;
+  certifications?: string | string[];
+  email?: string;
+}
+
 // Flight Types
 export interface Flight {
   id: number;
