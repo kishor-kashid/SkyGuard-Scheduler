@@ -1,7 +1,8 @@
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Bell } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Button } from '../common/Button';
+import { NotificationBell } from '../notifications/NotificationBell';
 
 export function Navbar() {
   const { user, logout } = useAuthStore();
@@ -40,12 +41,7 @@ export function Navbar() {
                 <span className="text-gray-500">({getRoleDisplay(user.role)})</span>
               </div>
               
-              <button
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Notifications"
-              >
-                <Bell className="w-5 h-5" />
-              </button>
+              <NotificationBell />
 
               <Button
                 variant="secondary"

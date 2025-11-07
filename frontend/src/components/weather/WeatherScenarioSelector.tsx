@@ -5,7 +5,7 @@ import { DemoScenario } from '../../services/weather.service';
 import { Select } from '../common/Select';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
-import { Cloud, Play } from 'lucide-react';
+import { Cloud } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function WeatherScenarioSelector() {
@@ -23,6 +23,23 @@ export function WeatherScenarioSelector() {
     if (canUse) {
       loadScenarios();
     }
+  }, [canUse]);
+
+  // Poll for demo mode changes every 2 seconds
+  useEffect(() => {
+    if (!canUse) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const data = await getDemoScenarios();
+        setDemoModeEnabled(data.demoModeEnabled);
+      } catch (error) {
+        // Silently fail - don't show toast on polling errors
+        console.error('Failed to poll demo mode status:', error);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
   }, [canUse]);
 
   const loadScenarios = async () => {
@@ -110,6 +127,9 @@ export function WeatherScenarioSelector() {
             <p className="text-xs text-gray-500 mt-1">
               Affects: {scenarios.find(s => s.id === selectedScenarioId)?.affectsTrainingLevels.join(', ') || 'None'}
             </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Time Window: Flights scheduled within the next 48 hours will be checked
+            </p>
           </div>
         )}
 
@@ -118,10 +138,8 @@ export function WeatherScenarioSelector() {
           onClick={handleTriggerCheck}
           isLoading={triggering}
           disabled={!demoModeEnabled || !selectedScenarioId}
-          className="w-full"
         >
-          <Play className="w-4 h-4 mr-2" />
-          Trigger Weather Check for All Flights
+          Trigger Weather Check
         </Button>
 
         {!demoModeEnabled && (

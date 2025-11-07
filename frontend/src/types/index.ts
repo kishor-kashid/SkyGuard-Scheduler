@@ -151,6 +151,29 @@ export interface DemoScenario {
   affectsTrainingLevels: string[];
 }
 
+// Notification Types
+export type NotificationType = 'WEATHER_ALERT' | 'RESCHEDULE_OPTIONS' | 'RESCHEDULE_CONFIRMED' | 'FLIGHT_CONFIRMED' | 'FLIGHT_CANCELLED';
+
+export interface Notification {
+  id: number;
+  userId: number;
+  bookingId?: number;
+  type: NotificationType;
+  message: string;
+  sentAt: string;
+  readAt?: string;
+  booking?: {
+    id: number;
+    scheduledDate: string;
+    status: string;
+  };
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   success: boolean;

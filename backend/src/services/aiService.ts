@@ -1,10 +1,25 @@
 import { generateObject } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { env } from '../config/env';
 import { RescheduleContext, RescheduleOption } from '../types';
 import { getWeatherMinimumsDescription } from '../utils/weatherMinimums';
 import { getWeatherForecast } from './weatherService';
+
+// Initialize OpenAI client - only if API key is available
+let openaiClient: ReturnType<typeof createOpenAI> | null = null;
+
+function getOpenAIClient() {
+  if (!env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+  if (!openaiClient) {
+    openaiClient = createOpenAI({
+      apiKey: env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 // Re-export RescheduleContext for use in controllers
 export type { RescheduleContext } from '../types';
@@ -56,6 +71,7 @@ export async function generateRescheduleOptions(
   const prompt = buildReschedulePrompt(context);
 
   try {
+    const openai = getOpenAIClient();
     const { object } = await generateObject({
       model: openai('gpt-4o-mini'), // Using gpt-4o-mini for cost efficiency, can upgrade to gpt-4 if needed
       schema: rescheduleOptionsSchema,

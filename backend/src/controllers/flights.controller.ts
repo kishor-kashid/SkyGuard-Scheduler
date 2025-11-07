@@ -483,11 +483,46 @@ export async function generateRescheduleOptionsController(
       throw new AppError('Cannot reschedule cancelled or completed flights', 400);
     }
 
-    // Check weather conflict
-    const weatherCheck = await checkFlightSafety(flight.id);
+    // Check if flight has weather hold status or recent unsafe weather check
+    // If flight status is WEATHER_HOLD, allow rescheduling regardless of fresh check
+    let weatherCheck;
+    if (flight.status === 'WEATHER_HOLD') {
+      // Flight is on weather hold, allow rescheduling
+      // Get the latest weather check for context
+      const latestWeatherCheck = await prisma.weatherCheck.findFirst({
+        where: { bookingId: flight.id },
+        orderBy: { checkTimestamp: 'desc' },
+      });
+      
+      weatherCheck = {
+        isSafe: false,
+        reason: latestWeatherCheck?.reason || 'Flight is on weather hold',
+        violations: latestWeatherCheck?.reason ? [latestWeatherCheck.reason] : ['Weather conditions do not meet minimums'],
+      };
+    } else {
+      // For other statuses, check the latest weather check from database
+      const latestWeatherCheck = await prisma.weatherCheck.findFirst({
+        where: { bookingId: flight.id },
+        orderBy: { checkTimestamp: 'desc' },
+      });
 
-    if (weatherCheck.isSafe) {
-      throw new AppError('Flight is safe - no weather conflict detected', 400);
+      // If there's a recent unsafe weather check, use it
+      // Otherwise, perform a fresh weather check
+      if (latestWeatherCheck && !latestWeatherCheck.isSafe) {
+        // Use existing unsafe weather check
+        weatherCheck = {
+          isSafe: false,
+          reason: latestWeatherCheck.reason || 'Weather conflict detected',
+          violations: latestWeatherCheck.reason ? [latestWeatherCheck.reason] : ['Weather conditions do not meet minimums'],
+        };
+      } else {
+        // Perform fresh weather check
+        weatherCheck = await checkFlightSafety(flight.id);
+        
+        if (weatherCheck.isSafe) {
+          throw new AppError('Flight is safe - no weather conflict detected. Please check weather first if conditions have changed.', 400);
+        }
+      }
     }
 
     // Get available slots

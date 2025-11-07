@@ -52,7 +52,15 @@ export function RescheduleOptionsModal({
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to load reschedule options';
       setError(errorMessage);
-      toast.error(errorMessage);
+      
+      // Show more helpful error message
+      if (errorMessage.includes('Flight is safe') || errorMessage.includes('no weather conflict')) {
+        toast.error('Weather conditions are currently safe. Please check weather first if conditions have changed.', {
+          duration: 5000,
+        });
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

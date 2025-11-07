@@ -11,7 +11,7 @@ import { Plus, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function Flights() {
-  const { flights, loading, error, fetchFlights, cancelFlight, setSelectedFlight, selectedFlight, triggerWeatherCheck } = useFlightsStore();
+  const { flights, loading, error, fetchFlights, fetchFlightById, cancelFlight, setSelectedFlight, selectedFlight, triggerWeatherCheck } = useFlightsStore();
   const { user } = useAuthStore();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -20,8 +20,13 @@ export function Flights() {
     fetchFlights(statusFilter ? { status: statusFilter as FlightStatus } : undefined);
   }, [statusFilter, fetchFlights]);
 
-  const handleFlightClick = (flight: Flight) => {
-    setSelectedFlight(flight);
+  const handleFlightClick = async (flight: Flight) => {
+    // Fetch full flight details with all includes (weatherChecks, etc.)
+    try {
+      await fetchFlightById(flight.id);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to load flight details');
+    }
   };
 
   const handleCloseDetails = () => {
@@ -63,16 +68,23 @@ export function Flights() {
             ← Back to Flights
           </Button>
         </div>
-        <FlightDetails
-          flight={selectedFlight}
-          onClose={handleCloseDetails}
-          onCancel={canCreateFlight ? handleCancelFlight : undefined}
-          onCheckWeather={handleCheckWeather}
-          onRescheduleComplete={() => {
-            fetchFlights(statusFilter ? { status: statusFilter as FlightStatus } : undefined);
-            handleCloseDetails();
-          }}
-        />
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <span className="ml-3 text-gray-600">Loading flight details...</span>
+          </div>
+        ) : (
+          <FlightDetails
+            flight={selectedFlight}
+            onClose={handleCloseDetails}
+            onCancel={canCreateFlight ? handleCancelFlight : undefined}
+            onCheckWeather={handleCheckWeather}
+            onRescheduleComplete={() => {
+              fetchFlights(statusFilter ? { status: statusFilter as FlightStatus } : undefined);
+              handleCloseDetails();
+            }}
+          />
+        )}
       </div>
     );
   }

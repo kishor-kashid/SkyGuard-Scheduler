@@ -21,9 +21,19 @@ export function Button({
     danger: 'btn-danger',
   };
 
+  const getDisabledClasses = () => {
+    if (!disabled && !isLoading) return '';
+    const disabledVariantClasses = {
+      primary: 'opacity-60 cursor-not-allowed bg-gray-400 hover:bg-gray-400 text-gray-600',
+      secondary: 'opacity-60 cursor-not-allowed bg-gray-300 hover:bg-gray-300 text-gray-500',
+      danger: 'opacity-60 cursor-not-allowed bg-gray-400 hover:bg-gray-400 text-gray-600',
+    };
+    return disabledVariantClasses[variant];
+  };
+
   return (
     <button
-      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${getDisabledClasses()} ${className}`}
       disabled={disabled || isLoading}
       {...props}
     >
