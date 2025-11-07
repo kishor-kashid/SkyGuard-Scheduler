@@ -5,7 +5,7 @@ import authRoutes from './routes/auth.routes';
 import weatherRoutes from './routes/weather.routes';
 import flightsRoutes from './routes/flights.routes';
 import notificationsRoutes from './routes/notifications.routes';
-import { env } from './config/env';
+import studentsRoutes from './routes/students.routes';
 
 const app: Application = express();
 
@@ -19,12 +19,8 @@ app.use(
   })
 );
 
-// Body parser middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     success: true,
     message: 'Server is running',
@@ -32,11 +28,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/flights', flightsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/students', studentsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

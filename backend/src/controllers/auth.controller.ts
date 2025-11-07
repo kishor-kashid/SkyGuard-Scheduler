@@ -189,41 +189,26 @@ export async function getCurrentUser(
         student: true,
         instructor: true,
       },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        student: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            trainingLevel: true,
-            availability: true,
-          },
-        },
-        instructor: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            certifications: true,
-          },
-        },
-      },
     });
 
     if (!user) {
       throw new AppError('User not found', 404);
     }
 
+    // Type assertion needed because Prisma include types aren't perfect
+    const userWithRelations = user as typeof user & {
+      student: { name: string } | null;
+      instructor: { name: string } | null;
+    };
+
     res.json({
       success: true,
       data: {
         user: {
-          ...user,
-          name: user.student?.name || user.instructor?.name || undefined,
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          name: userWithRelations.student?.name || userWithRelations.instructor?.name || undefined,
         },
       },
     });

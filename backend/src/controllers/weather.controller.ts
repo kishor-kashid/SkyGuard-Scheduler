@@ -4,6 +4,7 @@ import { getWeather, setDemoMode, setDemoScenario, isDemoModeEnabled } from '../
 import { checkFlightSafety, checkLocationWeather } from '../services/conflictDetectionService';
 import { getAllDemoScenarios } from '../utils/demoScenarios';
 import { TrainingLevel } from '../types';
+import { runWeatherCheck } from '../jobs/weatherCheckCron';
 
 /**
  * Check weather for a flight booking
@@ -158,6 +159,30 @@ export async function setDemoScenarioController(
         scenario,
         message: `Demo scenario set to: ${scenario.name}`,
         demoModeEnabled: isDemoModeEnabled(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Manually trigger weather check for all upcoming flights (admin only)
+ * This endpoint allows admins to manually run the weather check job for testing
+ */
+export async function triggerWeatherCheckController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    // Run weather check
+    await runWeatherCheck();
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Weather check completed successfully',
       },
     });
   } catch (error) {
