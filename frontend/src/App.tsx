@@ -7,6 +7,7 @@ import { Layout } from './components/layout/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Flights } from './pages/Flights';
+import { Weather } from './pages/Weather';
 
 function App() {
   const { checkAuth, isAuthenticated } = useAuthStore();
@@ -50,6 +51,17 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Flights />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/weather"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Weather />
               </Layout>
             </ProtectedRoute>
           }

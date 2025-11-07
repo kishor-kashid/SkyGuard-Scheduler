@@ -442,6 +442,11 @@ export async function generateRescheduleOptionsController(
 ) {
   try {
     const { id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      throw new AppError('Authentication required', 401);
+    }
 
     const flight = await prisma.flightBooking.findUnique({
       where: { id: parseInt(id) },
@@ -462,6 +467,16 @@ export async function generateRescheduleOptionsController(
 
     if (!flight) {
       throw new AppError('Flight not found', 404);
+    }
+
+    // Restrict reschedule options to students only
+    if (user.role !== 'STUDENT') {
+      throw new AppError('Only students can view reschedule options', 403);
+    }
+
+    // Verify the user is the student associated with this flight
+    if (flight.student.userId !== user.userId) {
+      throw new AppError('You can only view reschedule options for your own flights', 403);
     }
 
     if (flight.status === 'CANCELLED' || flight.status === 'COMPLETED') {
@@ -550,6 +565,11 @@ export async function confirmReschedule(
   try {
     const { id } = req.params;
     const { selectedOption } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new AppError('Authentication required', 401);
+    }
 
     if (!selectedOption || !selectedOption.dateTime) {
       throw new AppError('Selected option with dateTime is required', 400);
@@ -558,7 +578,11 @@ export async function confirmReschedule(
     const flight = await prisma.flightBooking.findUnique({
       where: { id: parseInt(id) },
       include: {
-        student: true,
+        student: {
+          include: {
+            user: true,
+          },
+        },
         instructor: true,
         aircraft: true,
       },
@@ -566,6 +590,16 @@ export async function confirmReschedule(
 
     if (!flight) {
       throw new AppError('Flight not found', 404);
+    }
+
+    // Restrict reschedule confirmation to students only
+    if (user.role !== 'STUDENT') {
+      throw new AppError('Only students can confirm reschedule options', 403);
+    }
+
+    // Verify the user is the student associated with this flight
+    if (flight.student.userId !== user.userId) {
+      throw new AppError('You can only confirm reschedule options for your own flights', 403);
     }
 
     if (flight.status === 'CANCELLED' || flight.status === 'COMPLETED') {

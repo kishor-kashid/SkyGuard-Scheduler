@@ -59,6 +59,96 @@ export interface Flight {
     tailNumber: string;
     model: string;
   };
+  weatherChecks?: Array<{
+    id: number;
+    checkTimestamp: string;
+    isSafe: boolean;
+    reason?: string;
+  }>;
+}
+
+export interface CreateFlightPayload {
+  studentId: number;
+  instructorId: number;
+  aircraftId: number;
+  scheduledDate: string; // ISO 8601 format
+  departureLocation: {
+    name: string;
+    lat: number;
+    lon: number;
+  };
+  destinationLocation?: {
+    name: string;
+    lat: number;
+    lon: number;
+  };
+  flightType: 'TRAINING' | 'SOLO' | 'CROSS_COUNTRY';
+  notes?: string;
+}
+
+export type FlightStatus = 'CONFIRMED' | 'CANCELLED' | 'WEATHER_HOLD' | 'COMPLETED';
+
+// Reschedule Types
+export interface RescheduleOption {
+  dateTime: string; // ISO 8601 format
+  reasoning: string;
+  weatherForecast: string;
+  priority: number; // 1 = best, 2 = good, 3 = acceptable
+  confidence: number; // 0 to 1
+}
+
+export interface RescheduleOptionsResponse {
+  flightId: number;
+  originalDate: string;
+  options: RescheduleOption[];
+}
+
+export interface RescheduleConfirmation {
+  selectedOption: RescheduleOption;
+}
+
+// Weather Types
+export interface WeatherAlert {
+  id: number;
+  flightId: number;
+  flight?: Flight;
+  reason: string;
+  violations: string[];
+  severity: 'low' | 'medium' | 'high';
+  timestamp: string;
+  isSafe: boolean;
+}
+
+export interface WeatherData {
+  location: {
+    name: string;
+    lat: number;
+    lon: number;
+  };
+  conditions: WeatherConditions;
+  timestamp: string;
+}
+
+export interface WeatherConditions {
+  visibility: number; // in miles
+  ceiling?: number; // in feet
+  windSpeed: number; // in knots
+  windDirection?: number; // in degrees
+  temperature: number; // in Fahrenheit
+  humidity: number; // percentage
+  precipitation: boolean;
+  thunderstorms: boolean;
+  icing: boolean;
+  cloudCover?: number; // percentage
+  description?: string;
+}
+
+export interface DemoScenario {
+  id: string;
+  name: string;
+  description: string;
+  weatherConditions: WeatherConditions;
+  affectsTrainingLevels: string[];
 }
 
 // API Response Types
@@ -72,4 +162,3 @@ export interface ApiError {
   message: string;
   statusCode?: number;
 }
-
