@@ -10,6 +10,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@esbuild/win32-x64": "^0.25.12",
     "axios": "^1.6.2",
     "lucide-react": "^0.303.0",
     "react": "^18.2.0",
@@ -34,4 +35,3 @@
     "vite": "^5.0.8"
   }
 }
-

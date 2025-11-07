@@ -442,6 +442,11 @@ export async function generateRescheduleOptionsController(
 ) {
   try {
     const { id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      throw new AppError('Authentication required', 401);
+    }
 
     const flight = await prisma.flightBooking.findUnique({
       where: { id: parseInt(id) },
@@ -464,15 +469,60 @@ export async function generateRescheduleOptionsController(
       throw new AppError('Flight not found', 404);
     }
 
+    // Restrict reschedule options to students only
+    if (user.role !== 'STUDENT') {
+      throw new AppError('Only students can view reschedule options', 403);
+    }
+
+    // Verify the user is the student associated with this flight
+    if (flight.student.userId !== user.userId) {
+      throw new AppError('You can only view reschedule options for your own flights', 403);
+    }
+
     if (flight.status === 'CANCELLED' || flight.status === 'COMPLETED') {
       throw new AppError('Cannot reschedule cancelled or completed flights', 400);
     }
 
-    // Check weather conflict
-    const weatherCheck = await checkFlightSafety(flight.id);
+    // Check if flight has weather hold status or recent unsafe weather check
+    // If flight status is WEATHER_HOLD, allow rescheduling regardless of fresh check
+    let weatherCheck;
+    if (flight.status === 'WEATHER_HOLD') {
+      // Flight is on weather hold, allow rescheduling
+      // Get the latest weather check for context
+      const latestWeatherCheck = await prisma.weatherCheck.findFirst({
+        where: { bookingId: flight.id },
+        orderBy: { checkTimestamp: 'desc' },
+      });
+      
+      weatherCheck = {
+        isSafe: false,
+        reason: latestWeatherCheck?.reason || 'Flight is on weather hold',
+        violations: latestWeatherCheck?.reason ? [latestWeatherCheck.reason] : ['Weather conditions do not meet minimums'],
+      };
+    } else {
+      // For other statuses, check the latest weather check from database
+      const latestWeatherCheck = await prisma.weatherCheck.findFirst({
+        where: { bookingId: flight.id },
+        orderBy: { checkTimestamp: 'desc' },
+      });
 
-    if (weatherCheck.isSafe) {
-      throw new AppError('Flight is safe - no weather conflict detected', 400);
+      // If there's a recent unsafe weather check, use it
+      // Otherwise, perform a fresh weather check
+      if (latestWeatherCheck && !latestWeatherCheck.isSafe) {
+        // Use existing unsafe weather check
+        weatherCheck = {
+          isSafe: false,
+          reason: latestWeatherCheck.reason || 'Weather conflict detected',
+          violations: latestWeatherCheck.reason ? [latestWeatherCheck.reason] : ['Weather conditions do not meet minimums'],
+        };
+      } else {
+        // Perform fresh weather check
+        weatherCheck = await checkFlightSafety(flight.id);
+        
+        if (weatherCheck.isSafe) {
+          throw new AppError('Flight is safe - no weather conflict detected. Please check weather first if conditions have changed.', 400);
+        }
+      }
     }
 
     // Get available slots
@@ -550,6 +600,11 @@ export async function confirmReschedule(
   try {
     const { id } = req.params;
     const { selectedOption } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      throw new AppError('Authentication required', 401);
+    }
 
     if (!selectedOption || !selectedOption.dateTime) {
       throw new AppError('Selected option with dateTime is required', 400);
@@ -558,7 +613,11 @@ export async function confirmReschedule(
     const flight = await prisma.flightBooking.findUnique({
       where: { id: parseInt(id) },
       include: {
-        student: true,
+        student: {
+          include: {
+            user: true,
+          },
+        },
         instructor: true,
         aircraft: true,
       },
@@ -566,6 +625,16 @@ export async function confirmReschedule(
 
     if (!flight) {
       throw new AppError('Flight not found', 404);
+    }
+
+    // Restrict reschedule confirmation to students only
+    if (user.role !== 'STUDENT') {
+      throw new AppError('Only students can confirm reschedule options', 403);
+    }
+
+    // Verify the user is the student associated with this flight
+    if (flight.student.userId !== user.userId) {
+      throw new AppError('You can only confirm reschedule options for your own flights', 403);
     }
 
     if (flight.status === 'CANCELLED' || flight.status === 'COMPLETED') {

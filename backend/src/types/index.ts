@@ -50,6 +50,30 @@ export interface Student {
   availability?: string;
 }
 
+export interface CreateStudentRequest {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+  trainingLevel: TrainingLevel;
+  availability?: {
+    weekdays?: string[];
+    preferredTimes?: string[];
+    [key: string]: any;
+  };
+}
+
+export interface UpdateStudentRequest {
+  name?: string;
+  phone?: string;
+  trainingLevel?: TrainingLevel;
+  availability?: {
+    weekdays?: string[];
+    preferredTimes?: string[];
+    [key: string]: any;
+  };
+}
+
 export interface Instructor {
   id: number;
   userId: number;

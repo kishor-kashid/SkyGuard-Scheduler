@@ -5,6 +5,7 @@ import {
   getDemoScenarios,
   setDemoModeController,
   setDemoScenarioController,
+  triggerWeatherCheckController,
 } from '../controllers/weather.controller';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 
@@ -44,6 +45,13 @@ router.post('/demo-mode', requireAdmin, setDemoModeController);
  * @access  Private (admin only)
  */
 router.post('/demo-scenario', requireAdmin, setDemoScenarioController);
+
+/**
+ * @route   POST /api/weather/trigger-check
+ * @desc    Manually trigger weather check for all upcoming flights
+ * @access  Private (admin only)
+ */
+router.post('/trigger-check', requireAdmin, triggerWeatherCheckController);
 
 export default router;
 

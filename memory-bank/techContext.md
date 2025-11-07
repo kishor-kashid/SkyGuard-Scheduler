@@ -148,18 +148,26 @@ flight-schedule-pro/
     ├── package.json
     ├── tsconfig.json
     ├── vite.config.ts
+    ├── tailwind.config.js
+    ├── postcss.config.js
     ├── index.html
     ├── .env
     └── src/
         ├── main.tsx         # Entry point
-        ├── App.tsx          # Root component
+        ├── App.tsx          # Root component with routing
         ├── components/      # React components
-        ├── pages/          # Page components
-        ├── hooks/          # Custom hooks
-        ├── services/       # API clients
-        ├── store/          # Zustand stores
-        ├── types/          # TypeScript types
-        └── styles/         # CSS files
+        │   ├── auth/        # Authentication components
+        │   ├── common/      # Reusable UI components
+        │   ├── flights/     # Flight-related components
+        │   ├── layout/      # Layout components
+        │   └── weather/     # Weather-related components
+        ├── pages/           # Page components
+        ├── hooks/           # Custom hooks
+        ├── services/        # API clients
+        ├── store/           # Zustand stores
+        ├── types/           # TypeScript types
+        ├── styles/          # CSS files
+        └── utils/           # Utility functions
 ```
 
 ## Database Configuration
@@ -182,9 +190,9 @@ flight-schedule-pro/
 - **Routes:**
   - `/api/auth/*` - Authentication (login, register, getCurrentUser)
   - `/api/flights/*` - Flight management (CRUD, reschedule, weather check)
-  - `/api/weather/*` - Weather operations (check, demo mode, scenarios)
+  - `/api/weather/*` - Weather operations (check, demo mode, scenarios, trigger-check)
   - `/api/notifications/*` - In-app notifications (get, mark read, delete, unread count)
-  - `/api/students/*` - Student management (PR #9 - pending)
+  - `/api/students/*` - Student management (CRUD operations)
   - `/health` - Health check endpoint
 
 ### CORS Configuration
@@ -233,9 +241,11 @@ npm run build        # Create production build
 - `react-router-dom` - Routing
 - `zustand` - State management
 - `axios` - HTTP client
-- `react-hot-toast` - Notifications
-- `lucide-react` - Icons
-- `tailwindcss` - Styling
+- `react-hot-toast` - Toast notifications
+- `lucide-react` - Icon library
+- `tailwindcss` - Utility-first CSS framework
+- `@types/node` - TypeScript types for Node.js
+- `autoprefixer` & `postcss` - CSS processing for Tailwind
 
 ## Technical Constraints
 

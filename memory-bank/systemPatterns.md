@@ -178,36 +178,79 @@ Routes → Controllers → Services → Database (Prisma)
 **Implemented Routes:**
 - `/api/auth/*` - Authentication (login, register, getCurrentUser)
 - `/api/flights/*` - Flight management (CRUD, reschedule, weather check)
-- `/api/weather/*` - Weather operations (check, demo mode, scenarios)
-- `/api/notifications/*` - Notification management (get, mark read, delete)
+  - Reschedule endpoints restricted to students only
+- `/api/weather/*` - Weather operations (check, demo mode, scenarios, trigger-check)
+- `/api/notifications/*` - Notification management (get, mark read, delete, unread count)
+- `/api/students/*` - Student management (CRUD operations)
 - `/health` - Health check endpoint
 
 ### Frontend Component Hierarchy
 ```
 App
 ├── Layout
-│   ├── Navbar (with NotificationBell)
+│   ├── Navbar (with NotificationBell - pending PR #15)
 │   └── Sidebar
 ├── ProtectedRoute
-│   └── Dashboard (role-based)
-│       ├── StudentDashboard
-│       ├── InstructorDashboard
-│       └── AdminDashboard
-├── Flights Page
-│   ├── FlightList
-│   │   └── FlightCard
-│   └── CreateFlightForm
-└── Weather Components
-    ├── WeatherAlertList
-    │   └── WeatherAlertCard
-    └── DemoModeToggle
+│   ├── Dashboard (placeholder - PR #14 pending)
+│   │   ├── StudentDashboard (pending)
+│   │   ├── InstructorDashboard (pending)
+│   │   └── AdminDashboard (pending)
+│   ├── Flights Page (PR #11 ✅)
+│   │   ├── FlightList
+│   │   │   └── FlightCard
+│   │   ├── FlightDetails
+│   │   └── CreateFlightForm
+│   └── Weather Page (PR #12 ✅)
+│       ├── WeatherAlertList
+│       │   └── WeatherAlertCard
+│       ├── DemoModeToggle
+│       └── WeatherScenarioSelector
+│   └── Reschedule Components (PR #13 ✅)
+│       ├── RescheduleOptionsModal
+│       └── RescheduleOptionCard
+└── Login Page (PR #10 ✅)
+    └── LoginForm
+```
+
+### Frontend State Management Pattern
+**Purpose:** Centralized state management with Zustand
+**Location:** `frontend/src/store/`
+
+**Stores:**
+- `authStore.ts` - Authentication state (user, token, isAuthenticated)
+  - Persists to localStorage
+  - Methods: login, logout, checkAuth, setUser
+- `flightsStore.ts` - Flight-related state (flights array, selectedFlight, loading, error)
+  - Methods: fetchFlights, fetchFlightById, createFlight, updateFlight, cancelFlight, triggerWeatherCheck
+
+**Pattern:**
+```typescript
+// Store definition
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      login: async (credentials) => { /* ... */ },
+      logout: () => { /* ... */ },
+    }),
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);
+
+// Component usage
+const { user, login, isAuthenticated } = useAuthStore();
 ```
 
 ## Data Flow Patterns
 
 ### Weather Check Flow
 ```
-Cron Job (hourly) [PR #8 - Pending]
+Cron Job (hourly) [PR #8 ✅]
   → Get Upcoming Flights (next 48 hours)
   → For Each Flight:
       → Fetch Weather (departure, destination, corridor)
@@ -228,7 +271,8 @@ Cron Job (hourly) [PR #8 - Pending]
 ### Reschedule Flow
 ```
 Weather Conflict Detected
-  → User Requests Reschedule Options (POST /api/flights/:id/reschedule-options)
+  → Student Requests Reschedule Options (POST /api/flights/:id/reschedule-options)
+  → Backend Authorization: Verify user is STUDENT and owns the flight
   → AI Service Analyzes:
       → Student Availability
       → Instructor Availability
@@ -236,8 +280,9 @@ Weather Conflict Detected
       → Weather Forecasts
       → Training Level Requirements
   → Generate 3 Options (via OpenAI)
-  → Create In-App Notifications (reschedule options available)
-  → User Selects Option (POST /api/flights/:id/confirm-reschedule)
+  → Create In-App Notifications (student & instructor notified)
+  → Student Selects Option (POST /api/flights/:id/confirm-reschedule)
+  → Backend Authorization: Verify user is STUDENT and owns the flight
   → Validate Availability
   → Create New Booking (CONFIRMED)
   → Cancel Original Booking (CANCELLED)
@@ -245,6 +290,10 @@ Weather Conflict Detected
   → Send Confirmation Notifications
   → Log Reschedule Event with Metrics
 ```
+
+**Authorization:** Reschedule options and confirmation are restricted to students only. Both endpoints verify:
+1. User role is `STUDENT`
+2. User is the student associated with the flight
 
 ## Key Technical Decisions
 
