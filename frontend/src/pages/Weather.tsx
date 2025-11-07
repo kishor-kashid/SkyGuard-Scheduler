@@ -61,8 +61,8 @@ export function Weather() {
   };
 
   const handleAlertClick = (alert: WeatherAlert) => {
-    // Navigate to flight details or show modal
-    console.log('Alert clicked:', alert);
+    // TODO: Navigate to flight details or show alert details modal
+    // For now, alerts are informational only
   };
 
   const isAdmin = user?.role === 'ADMIN';

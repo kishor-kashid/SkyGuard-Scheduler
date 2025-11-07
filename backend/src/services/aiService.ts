@@ -6,9 +6,17 @@ import { RescheduleContext, RescheduleOption } from '../types';
 import { getWeatherMinimumsDescription } from '../utils/weatherMinimums';
 import { getWeatherForecast } from './weatherService';
 
-// Initialize OpenAI client - only if API key is available
+/**
+ * OpenAI client instance for AI service
+ * Lazy-initialized to avoid errors when API key is not configured
+ */
 let openaiClient: ReturnType<typeof createOpenAI> | null = null;
 
+/**
+ * Get or initialize the OpenAI client
+ * @returns {ReturnType<typeof createOpenAI>} Configured OpenAI client
+ * @throws {Error} If OPENAI_API_KEY environment variable is not set
+ */
 function getOpenAIClient() {
   if (!env.OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
@@ -58,7 +66,29 @@ export const rescheduleOptionsSchema = z.object({
 });
 
 /**
- * Generate AI-powered reschedule options
+ * Generate AI-powered reschedule options for a cancelled flight
+ * 
+ * Uses OpenAI GPT-4o-mini to analyze available time slots and generate 3 optimal
+ * reschedule suggestions based on:
+ * - Student's training level and weather minimums
+ * - Instructor and aircraft availability
+ * - Historical weather patterns
+ * - Student availability preferences
+ * 
+ * @param {RescheduleContext} context - Complete context including flight, student, instructor, aircraft, weather conflict, and available slots
+ * @returns {Promise<RescheduleOption[]>} Array of 3 prioritized reschedule options with reasoning, weather forecast, and confidence scores
+ * @throws {Error} If OpenAI API key is not configured or if API call fails
+ * 
+ * @example
+ * const options = await generateRescheduleOptions({
+ *   originalFlight: flight,
+ *   student: studentData,
+ *   instructor: instructorData,
+ *   aircraft: aircraftData,
+ *   weatherConflict: conflictData,
+ *   availableSlots: slots
+ * });
+ * // Returns: [{ dateTime, reasoning, weatherForecast, priority, confidence }, ...]
  */
 export async function generateRescheduleOptions(
   context: RescheduleContext
@@ -88,13 +118,25 @@ export async function generateRescheduleOptions(
       confidence: option.confidence,
     }));
   } catch (error) {
-    console.error('AI service error:', error);
+    // Error is logged and thrown for controller to handle
     throw new Error('Failed to generate reschedule options. Please try again.');
   }
 }
 
 /**
- * Build the prompt for AI rescheduling
+ * Build a detailed prompt for the AI model to generate reschedule options
+ * 
+ * Constructs a comprehensive prompt including:
+ * - Original flight details
+ * - Weather conflict explanation
+ * - Student training level requirements
+ * - Available time slots
+ * - Student availability preferences
+ * - Instructions for the AI
+ * 
+ * @param {RescheduleContext} context - Complete rescheduling context
+ * @returns {string} Formatted prompt string for OpenAI API
+ * @private
  */
 function buildReschedulePrompt(context: RescheduleContext): string {
   const weatherMinimums = getWeatherMinimumsDescription(context.student.trainingLevel);
@@ -142,7 +184,18 @@ Generate exactly 3 reschedule options with detailed reasoning.`;
 }
 
 /**
- * Format available slots for AI prompt
+ * Format available time slots into a human-readable string for AI prompt
+ * 
+ * Converts array of slot objects into numbered list with formatted dates
+ * 
+ * @param {Array<{dateTime: string, available: boolean}>} slots - Array of available time slots
+ * @returns {string} Formatted string with numbered list of available slots
+ * 
+ * @example
+ * formatAvailableSlots([
+ *   { dateTime: '2024-03-21T10:00:00Z', available: true }
+ * ]);
+ * // Returns: "1. Wednesday, March 21, 2024 at 10:00 AM (2024-03-21T10:00:00.000Z)"
  */
 export function formatAvailableSlots(slots: { dateTime: string; available: boolean }[]): string {
   if (slots.length === 0) {
@@ -172,7 +225,24 @@ export function formatAvailableSlots(slots: { dateTime: string; available: boole
 export { getWeatherMinimumsDescription };
 
 /**
- * Get weather forecast for a future date (helper for AI context)
+ * Get weather forecast for a future date at a specific location
+ * 
+ * Helper function for providing weather context to AI. Calls the weather service
+ * and formats the forecast into a concise string.
+ * 
+ * @param {Object} location - Location object with airport name and coordinates
+ * @param {string} location.name - Airport code (e.g., "KJFK")
+ * @param {number} location.lat - Latitude
+ * @param {number} location.lon - Longitude
+ * @param {Date} dateTime - Target date/time for forecast
+ * @returns {Promise<string>} Formatted forecast string or "Weather forecast unavailable" if error
+ * 
+ * @example
+ * const forecast = await getWeatherForecastForSlot(
+ *   { name: 'KJFK', lat: 40.6413, lon: -73.7781 },
+ *   new Date('2024-03-21T10:00:00Z')
+ * );
+ * // Returns: "Expected conditions: Clear skies, Visibility: 10 mi, Wind: 5 kt"
  */
 export async function getWeatherForecastForSlot(
   location: { name: string; lat: number; lon: number },

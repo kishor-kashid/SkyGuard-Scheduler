@@ -120,8 +120,8 @@ export function AdminDashboard() {
             <WeatherAlertList
               alerts={weatherAlerts.slice(0, 5)}
               onAlertClick={(alert) => {
-                // Navigate to flight details
-                console.log('Alert clicked:', alert);
+                // TODO: Navigate to flight details or show alert details modal
+                // For now, alerts are informational only
               }}
             />
           ) : (

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { env } from '../config/env';
-import { WeatherData, WeatherConditions, Location, DemoScenario } from '../types';
+import { WeatherData, WeatherConditions, Location } from '../types';
 import { getDemoScenario } from '../utils/demoScenarios';
 
 // Global demo mode state (in production, this would be in a database or cache)
