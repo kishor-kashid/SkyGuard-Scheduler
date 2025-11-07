@@ -53,10 +53,10 @@
 
 **Services:**
 - `authService.ts` - Authentication and authorization logic
-- `weatherService.ts` - Weather API integration and data fetching
+- `weatherService.ts` - Weather API integration and data fetching (with demo mode)
 - `conflictDetectionService.ts` - Weather conflict evaluation logic
-- `aiService.ts` - AI-powered rescheduling generation
-- `notificationService.ts` - Email and in-app notification handling
+- `aiService.ts` - AI-powered rescheduling generation (Vercel AI SDK with OpenAI)
+- `notificationService.ts` - In-app notification handling (email deferred)
 - `schedulingService.ts` - Availability checking and slot management
 
 **Pattern:**
@@ -108,8 +108,15 @@ const flight = await prisma.flightBooking.findUnique({
 ```
 Conflict Detected → Update Flight Status → Trigger Notification Service
                                                       ↓
-                                    Send Email + Create In-App Notification
+                                    Create In-App Notification (Email deferred)
 ```
+
+**Notification Integration Points:**
+- Flight creation → Confirmation notifications
+- Weather conflict detected → Weather alert notifications
+- Reschedule options generated → Reschedule options notifications
+- Reschedule confirmed → Reschedule confirmation notifications
+- Flight cancelled → Cancellation notifications
 
 ### 5. AI Integration Pattern
 **Purpose:** Structured AI responses with validation
@@ -122,17 +129,25 @@ const rescheduleOptionsSchema = z.object({
   options: z.array(z.object({
     dateTime: z.string(),
     reasoning: z.string(),
-    weatherForecast: z.string()
-  }))
+    weatherForecast: z.string(),
+    priority: z.number().int().min(1).max(3),
+    confidence: z.number().min(0).max(1)
+  })).length(3)
 });
 
 // Use with AI SDK
 const result = await generateObject({
-  model: openai('gpt-4'),
+  model: openai('gpt-4o-mini'), // Cost-efficient model
   schema: rescheduleOptionsSchema,
-  prompt: buildPrompt(context)
+  prompt: buildPrompt(context),
+  temperature: 0.7
 });
 ```
+
+**AI Model Decision:**
+- Using `gpt-4o-mini` for cost efficiency
+- Can upgrade to `gpt-4` if needed for better reasoning
+- Zod schema ensures consistent structured output
 
 ### 6. Demo Mode Pattern
 **Purpose:** Test system without external API dependencies
@@ -155,8 +170,17 @@ Routes → Controllers → Services → Database (Prisma)
                 ↓
          External APIs (Weather, AI)
                 ↓
-         Notification Service
+         Notification Service (In-App)
+                ↓
+         Database (Notification records)
 ```
+
+**Implemented Routes:**
+- `/api/auth/*` - Authentication (login, register, getCurrentUser)
+- `/api/flights/*` - Flight management (CRUD, reschedule, weather check)
+- `/api/weather/*` - Weather operations (check, demo mode, scenarios)
+- `/api/notifications/*` - Notification management (get, mark read, delete)
+- `/health` - Health check endpoint
 
 ### Frontend Component Hierarchy
 ```
@@ -183,32 +207,43 @@ App
 
 ### Weather Check Flow
 ```
-Cron Job (hourly)
-  → Get Upcoming Flights
+Cron Job (hourly) [PR #8 - Pending]
+  → Get Upcoming Flights (next 48 hours)
   → For Each Flight:
       → Fetch Weather (departure, destination, corridor)
       → Get Student Training Level
       → Evaluate Against Minimums
       → If Conflict:
-          → Update Flight Status
-          → Send Notifications
-          → Generate Reschedule Options (on-demand)
+          → Update Flight Status (WEATHER_HOLD)
+          → Create In-App Notifications (student & instructor)
+          → Save Weather Check to Database
+          → Generate Reschedule Options (on-demand via API)
 ```
+
+**Manual Weather Check:**
+- Available via `POST /api/flights/:id/check-weather`
+- Triggers same flow as automated check
+- Returns weather check results immediately
 
 ### Reschedule Flow
 ```
-User Requests Reschedule
+Weather Conflict Detected
+  → User Requests Reschedule Options (POST /api/flights/:id/reschedule-options)
   → AI Service Analyzes:
       → Student Availability
       → Instructor Availability
       → Aircraft Availability
       → Weather Forecasts
-  → Generate 3 Options
-  → User Selects Option
-  → Create New Booking
-  → Cancel Original Booking
-  → Send Confirmations
-  → Log Reschedule Event
+      → Training Level Requirements
+  → Generate 3 Options (via OpenAI)
+  → Create In-App Notifications (reschedule options available)
+  → User Selects Option (POST /api/flights/:id/confirm-reschedule)
+  → Validate Availability
+  → Create New Booking (CONFIRMED)
+  → Cancel Original Booking (CANCELLED)
+  → Create Reschedule Event Record
+  → Send Confirmation Notifications
+  → Log Reschedule Event with Metrics
 ```
 
 ## Key Technical Decisions

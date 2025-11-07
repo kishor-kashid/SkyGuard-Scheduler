@@ -21,9 +21,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.7.1",
-    "ai": "^2.2.31",
     "@ai-sdk/openai": "^0.0.10",
+    "@prisma/client": "^6.19.0",
+    "ai": "^2.2.31",
     "axios": "^1.6.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
@@ -42,9 +42,11 @@
     "@types/node": "^20.10.5",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.14",
-    "prisma": "^5.7.1",
+    "prisma": "^6.19.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
-

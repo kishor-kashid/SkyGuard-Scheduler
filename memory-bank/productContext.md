@@ -83,10 +83,11 @@ Flight training schools face a critical challenge: weather-related cancellations
 - Generates 3 options with justifications
 
 **Notifications:**
-- Email sent immediately upon conflict
+- In-app notifications sent immediately upon conflict (email notifications deferred)
 - In-app notification appears in notification bell
 - Both student and instructor notified
 - Confirmation sent when reschedule selected
+- Automatic notifications for: flight confirmation, weather alerts, reschedule options, reschedule confirmation, cancellation
 
 ## User Experience Goals
 

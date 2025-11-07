@@ -1,0 +1,196 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         UserRole  @default(STUDENT)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  student    Student?
+  instructor Instructor?
+  notifications Notification[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+// Student model
+model Student {
+  id            Int            @id @default(autoincrement())
+  userId        Int            @unique @map("user_id")
+  name          String
+  phone         String?
+  trainingLevel TrainingLevel  @map("training_level")
+  availability  String?       // JSON string for availability schedule
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flights FlightBooking[]
+
+  @@map("students")
+}
+
+enum TrainingLevel {
+  STUDENT_PILOT
+  PRIVATE_PILOT
+  INSTRUMENT_RATED
+}
+
+// Instructor model
+model Instructor {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @unique @map("user_id")
+  name          String
+  phone         String?
+  certifications String?  // JSON string for certifications
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flights FlightBooking[]
+
+  @@map("instructors")
+}
+
+// Aircraft model (simplified - just ID and name for now)
+model Aircraft {
+  id        Int       @id @default(autoincrement())
+  tailNumber String   @unique @map("tail_number")
+  model     String
+  type      String?   // e.g., "Cessna 172"
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  flights FlightBooking[]
+
+  @@map("aircraft")
+}
+
+// Flight Booking model
+model FlightBooking {
+  id                 Int              @id @default(autoincrement())
+  studentId          Int              @map("student_id")
+  instructorId       Int              @map("instructor_id")
+  aircraftId         Int              @map("aircraft_id")
+  scheduledDate      DateTime         @map("scheduled_date")
+  departureLocation  String           @map("departure_location") // JSON: {name, lat, lon}
+  destinationLocation String?         @map("destination_location") // JSON: {name, lat, lon}
+  status             FlightStatus     @default(CONFIRMED)
+  flightType         FlightType       @map("flight_type")
+  notes              String?
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  instructor       Instructor       @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  aircraft         Aircraft         @relation(fields: [aircraftId], references: [id], onDelete: Restrict)
+  weatherChecks     WeatherCheck[]
+  notifications    Notification[]
+  originalReschedules RescheduleEvent[] @relation("OriginalBooking")
+  newReschedules    RescheduleEvent[]    @relation("NewBooking")
+
+  @@map("flight_bookings")
+}
+
+enum FlightStatus {
+  CONFIRMED
+  CANCELLED
+  WEATHER_HOLD
+  COMPLETED
+}
+
+enum FlightType {
+  TRAINING
+  SOLO
+  CROSS_COUNTRY
+}
+
+// Weather Check model
+model WeatherCheck {
+  id            Int       @id @default(autoincrement())
+  bookingId     Int       @map("booking_id")
+  checkTimestamp DateTime  @default(now()) @map("check_timestamp")
+  weatherData   String    @map("weather_data") // JSON string with weather details
+  isSafe        Boolean   @map("is_safe")
+  reason        String?   // Explanation if unsafe
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  booking FlightBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("weather_checks")
+}
+
+// Reschedule Event model
+model RescheduleEvent {
+  id              Int                @id @default(autoincrement())
+  originalBookingId Int              @map("original_booking_id")
+  newBookingId    Int?               @map("new_booking_id")
+  suggestedOptions String            @map("suggested_options") // JSON array of reschedule options
+  selectedOption  String?            @map("selected_option") // JSON of selected option
+  status          RescheduleStatus    @default(PENDING)
+  createdAt       DateTime           @default(now()) @map("created_at")
+  confirmedAt     DateTime?          @map("confirmed_at")
+
+  // Relations
+  originalBooking FlightBooking? @relation("OriginalBooking", fields: [originalBookingId], references: [id], onDelete: Cascade)
+  newBooking      FlightBooking? @relation("NewBooking", fields: [newBookingId], references: [id], onDelete: SetNull)
+
+  @@map("reschedule_events")
+}
+
+enum RescheduleStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+// Notification model
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  bookingId Int?             @map("booking_id")
+  type      NotificationType
+  message   String
+  sentAt    DateTime         @default(now()) @map("sent_at")
+  readAt    DateTime?        @map("read_at")
+
+  // Relations
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking FlightBooking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  WEATHER_ALERT
+  RESCHEDULE_OPTIONS
+  RESCHEDULE_CONFIRMED
+  FLIGHT_CONFIRMED
+  FLIGHT_CANCELLED
+}
+

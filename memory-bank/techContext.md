@@ -180,12 +180,12 @@ flight-schedule-pro/
 ### Backend API Structure
 - **Base URL:** `/api`
 - **Routes:**
-  - `/api/auth/*` - Authentication
-  - `/api/flights/*` - Flight management
-  - `/api/weather/*` - Weather operations
-  - `/api/notifications/*` - Notifications
-  - `/api/students/*` - Student management
-  - `/health` - Health check
+  - `/api/auth/*` - Authentication (login, register, getCurrentUser)
+  - `/api/flights/*` - Flight management (CRUD, reschedule, weather check)
+  - `/api/weather/*` - Weather operations (check, demo mode, scenarios)
+  - `/api/notifications/*` - In-app notifications (get, mark read, delete, unread count)
+  - `/api/students/*` - Student management (PR #9 - pending)
+  - `/health` - Health check endpoint
 
 ### CORS Configuration
 - **Development:** Allow `http://localhost:5173`
@@ -216,16 +216,17 @@ npm run build        # Create production build
 
 ### Critical Backend Dependencies
 - `express` - Web framework
-- `@prisma/client` - Database client
-- `prisma` - Prisma CLI
+- `@prisma/client` - Database client (v6.19.0)
+- `prisma` - Prisma CLI (v6.19.0)
 - `jsonwebtoken` - JWT handling
 - `bcrypt` - Password hashing
-- `node-cron` - Scheduled jobs
-- `nodemailer` - Email sending
-- `ai` - Vercel AI SDK
-- `@ai-sdk/openai` - OpenAI provider
-- `zod` - Schema validation
+- `node-cron` - Scheduled jobs (for PR #8)
+- `nodemailer` - Email sending (installed, not yet implemented)
+- `ai` - Vercel AI SDK (v2.2.31)
+- `@ai-sdk/openai` - OpenAI provider (v0.0.10)
+- `zod` - Schema validation (v3.22.4)
 - `axios` - HTTP client (for weather API)
+- `tsx` - TypeScript execution (for dev and seed scripts)
 
 ### Critical Frontend Dependencies
 - `react` & `react-dom` - React library
@@ -320,11 +321,12 @@ npm run build        # Create production build
 
 ## Known Technical Challenges
 
-1. **Weather API Reliability** - Demo mode addresses this
-2. **AI Response Consistency** - Zod schemas ensure structure
-3. **Real-time Updates** - Polling vs WebSocket decision pending
+1. **Weather API Reliability** - ✅ Solved with demo mode
+2. **AI Response Consistency** - ✅ Solved with Zod schemas
+3. **Real-time Updates** - Polling vs WebSocket decision pending (currently using polling)
 4. **Database Migrations** - Careful planning required for production
-5. **Email Delivery** - SMTP configuration can be tricky
+5. **Email Delivery** - SMTP configuration deferred (in-app notifications implemented)
+6. **TypeScript Return Types** - Minor warning in getFlights controller (non-blocking)
 
 ## Future Technical Considerations
 
