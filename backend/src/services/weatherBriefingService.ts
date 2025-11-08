@@ -349,6 +349,7 @@ Consider the pilot's training level and weather minimums.`;
   try {
     const openai = getOpenAIClient();
     const { object } = await generateObject({
+      // @ts-ignore - AI SDK version conflict in node_modules
       model: openai('gpt-4o-mini'),
       schema: z.object({
         level: z.enum(['LOW', 'MODERATE', 'HIGH', 'SEVERE']),
@@ -396,6 +397,7 @@ Provide a recommendation with:
   try {
     const openai = getOpenAIClient();
     const { object } = await generateObject({
+      // @ts-ignore - AI SDK version conflict in node_modules
       model: openai('gpt-4o-mini'),
       schema: z.object({
         action: z.enum(['PROCEED', 'CAUTION', 'DELAY', 'CANCEL']),
@@ -453,6 +455,7 @@ Provide:
 
     const openai = getOpenAIClient();
     const { object } = await generateObject({
+      // @ts-ignore - AI SDK version conflict in node_modules
       model: openai('gpt-4o-mini'),
       schema: z.object({
         similarConditions: z.array(z.object({
@@ -544,6 +547,7 @@ export async function generateWeatherBriefing(
   try {
     const openai = getOpenAIClient();
     const { object } = await generateObject({
+      // @ts-ignore - AI SDK version conflict in node_modules
       model: openai('gpt-4o-mini'),
       schema: weatherBriefingSchema,
       prompt,
@@ -571,7 +575,7 @@ export async function generateWeatherBriefing(
       currentConditions: {
         description: object.currentConditions.description,
         visibility: object.currentConditions.visibility,
-        ceiling: object.currentConditions.ceiling,
+        ceiling: object.currentConditions.ceiling ?? undefined,
         windSpeed: object.currentConditions.windSpeed,
         temperature: object.currentConditions.temperature,
         precipitation: object.currentConditions.precipitation,

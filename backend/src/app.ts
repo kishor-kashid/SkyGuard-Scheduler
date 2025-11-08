@@ -10,7 +10,7 @@ import instructorsRoutes from './routes/instructors.routes';
 import aircraftRoutes from './routes/aircraft.routes';
 import airportsRoutes from './routes/airports.routes';
 import flightHistoryRoutes from './routes/flightHistory.routes';
-import { flightBriefingRouter, customBriefingRouter } from './routes/weatherBriefing.routes';
+import { customBriefingRouter } from './routes/weatherBriefing.routes';
 
 const app: Application = express();
 

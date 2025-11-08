@@ -103,6 +103,7 @@ export async function generateRescheduleOptions(
   try {
     const openai = getOpenAIClient();
     const { object } = await generateObject({
+      // @ts-ignore - AI SDK version conflict in node_modules
       model: openai('gpt-4o-mini'), // Using gpt-4o-mini for cost efficiency, can upgrade to gpt-4 if needed
       schema: rescheduleOptionsSchema,
       prompt,
