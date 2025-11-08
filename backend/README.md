@@ -211,11 +211,13 @@ Get all flights (filtered by user role)
       "status": "CONFIRMED",
       "student": { "id": 1, "name": "John Doe" },
       "instructor": { "id": 1, "name": "Jane Smith" },
-      "aircraft": { "id": 1, "registration": "N12345" }
+      "aircraft": { "id": 1, "tailNumber": "N12345" }
     }
   ]
 }
 ```
+
+**Note:** Flight creation now validates that student, instructor, and aircraft exist before creation.
 
 #### POST `/api/flights`
 Create new flight (Instructors and Admins only)
@@ -281,6 +283,24 @@ Confirm reschedule option (Students only)
 }
 ```
 
+#### GET `/api/flights/:id/history`
+Get flight history timeline (all changes and actions)
+
+#### GET `/api/flights/:id/notes`
+Get flight notes
+
+#### POST `/api/flights/:id/notes`
+Create flight note
+
+#### POST `/api/flights/:id/training-hours`
+Log training hours for a flight
+
+#### POST `/api/flights/:id/weather-briefing`
+Generate AI weather briefing for a flight
+
+#### GET `/api/flights/:id/weather-briefing`
+Get cached weather briefing for a flight
+
 ### Weather (`/api/weather`)
 
 #### GET `/api/weather/demo-scenarios`
@@ -310,6 +330,34 @@ Toggle demo mode (Admin only)
 #### POST `/api/weather/trigger-check`
 Manually trigger weather check (Admin only)
 
+#### POST `/api/weather/briefing`
+Generate custom AI weather briefing
+
+**Request:**
+```json
+{
+  "location": { "name": "KHOU", "lat": 29.6454, "lon": -95.2789 },
+  "dateTime": "2024-03-20T10:00:00Z",
+  "trainingLevel": "STUDENT_PILOT"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "summary": "Weather conditions summary...",
+    "currentConditions": { ... },
+    "forecast": { ... },
+    "riskAssessment": { "level": "LOW", ... },
+    "recommendation": { "action": "PROCEED", ... },
+    "historicalComparison": { ... },
+    "confidence": 0.95
+  }
+}
+```
+
 ### Students (`/api/students`)
 
 #### GET `/api/students`
@@ -326,6 +374,12 @@ Update student
 
 #### DELETE `/api/students/:id`
 Delete student (Admins only)
+
+#### GET `/api/students/:id/flight-history`
+Get student's complete flight history
+
+#### GET `/api/students/:id/training-hours`
+Get student's training hours summary
 
 ### Notifications (`/api/notifications`)
 
@@ -344,6 +398,33 @@ Mark all notifications as read
 #### DELETE `/api/notifications/:id`
 Delete notification
 
+### Instructors (`/api/instructors`)
+
+#### GET `/api/instructors`
+Get all instructors (Instructors and Admins - needed for flight creation)
+
+#### POST `/api/instructors`
+Create new instructor (Admins only)
+
+#### GET `/api/instructors/:id`
+Get single instructor (Admins only)
+
+#### GET `/api/instructors/:id/flight-history`
+Get instructor's complete flight history
+
+### Aircraft (`/api/aircraft`)
+
+#### GET `/api/aircraft`
+Get all aircraft (Instructors and Admins - needed for flight creation)
+
+#### GET `/api/aircraft/:id`
+Get single aircraft (Admins only)
+
+### Airports (`/api/airports`)
+
+#### GET `/api/airports`
+Get all airports (Authenticated users)
+
 ## 🤖 Services
 
 ### Weather Service
@@ -355,6 +436,15 @@ Delete notification
 - Uses OpenAI GPT-4o-mini for reschedule suggestions
 - Generates 3 prioritized options
 - Considers: weather forecast, availability, student training level
+
+### Weather Briefing Service
+- Uses OpenAI GPT-4o-mini for natural language weather briefings
+- Generates personalized briefings based on training level
+- Provides risk assessment (LOW, MODERATE, HIGH, SEVERE)
+- Generates action recommendations (PROCEED, CAUTION, DELAY, CANCEL)
+- Compares with historical weather data
+- Caches briefings with 1-hour TTL
+- Automatically invalidates cache when weather updates
 
 ### Conflict Detection Service
 - Evaluates flights against weather minimums
@@ -375,6 +465,13 @@ Delete notification
   - `WEATHER_ALERT`
   - `RESCHEDULE_AVAILABLE`
   - `RESCHEDULE_CONFIRMED`
+
+### Flight History Service
+- Tracks all flight changes (CREATED, UPDATED, CANCELLED, COMPLETED, RESCHEDULED, STATUS_CHANGED)
+- Records who made changes and when
+- Supports flight notes (PRE_FLIGHT, POST_FLIGHT, DEBRIEF, GENERAL, INSTRUCTOR_NOTES, STUDENT_NOTES)
+- Tracks training hours (GROUND, FLIGHT, SIMULATOR)
+- Provides complete audit trail
 
 ## ⏰ Scheduled Jobs
 

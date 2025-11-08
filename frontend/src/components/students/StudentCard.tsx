@@ -1,6 +1,9 @@
 import { Student } from '../../types';
 import { Card } from '../common/Card';
+import { Button } from '../common/Button';
 import { User, Mail, Phone, Award } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuthStore } from '../../store/authStore';
 
 interface StudentCardProps {
   student: Student;
@@ -8,6 +11,9 @@ interface StudentCardProps {
 }
 
 export function StudentCard({ student, onClick }: StudentCardProps) {
+  const { user } = useAuthStore();
+  const isAdminOrInstructor = user?.role === 'ADMIN' || user?.role === 'INSTRUCTOR';
+  
   const getTrainingLevelColor = (level: string) => {
     switch (level) {
       case 'STUDENT_PILOT':
@@ -75,6 +81,17 @@ export function StudentCard({ student, onClick }: StudentCardProps) {
           <span>{getTrainingLevelLabel(student.trainingLevel)}</span>
         </div>
       </div>
+
+      {/* View History Button for Admin/Instructor */}
+      {isAdminOrInstructor && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <Link to={`/flight-history/${student.id}`}>
+            <Button variant="secondary" size="sm" className="w-full text-xs py-1.5">
+              View Flight History
+            </Button>
+          </Link>
+        </div>
+      )}
     </Card>
   );
 }

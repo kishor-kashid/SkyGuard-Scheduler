@@ -7,7 +7,9 @@ import { Select } from '../common/Select';
 import { Card } from '../common/Card';
 import { CreateFlightPayload } from '../../types';
 import { getStudents } from '../../services/students.service';
-import { Student } from '../../types';
+import { getInstructors } from '../../services/instructors.service';
+import { getAircraft } from '../../services/aircraft.service';
+import { Student, Instructor, Aircraft } from '../../types';
 import toast from 'react-hot-toast';
 
 interface CreateFlightFormProps {
@@ -15,32 +17,6 @@ interface CreateFlightFormProps {
   onCancel?: () => void;
 }
 
-// Mock data for instructors and aircraft (in real app, these would come from API)
-const MOCK_INSTRUCTORS = [
-  { id: 1, name: 'John Smith' },
-  { id: 2, name: 'Jane Doe' },
-];
-
-const MOCK_AIRCRAFT = [
-  // Cessna Training Aircraft
-  { id: 1, tailNumber: 'N12345', model: 'Cessna 172' },
-  { id: 2, tailNumber: 'N11111', model: 'Cessna 152' },
-  { id: 3, tailNumber: 'N23456', model: 'Cessna 172SP' },
-  { id: 4, tailNumber: 'N34567', model: 'Cessna 172R' },
-  { id: 5, tailNumber: 'N45678', model: 'Cessna 182' },
-  
-  // Piper Aircraft
-  { id: 6, tailNumber: 'N67890', model: 'Piper PA-28' },
-  { id: 7, tailNumber: 'N78901', model: 'Piper PA-28-181' },
-  { id: 8, tailNumber: 'N89012', model: 'Piper PA-28-161' },
-  { id: 9, tailNumber: 'N90123', model: 'Piper PA-44' },
-  
-  // Other Training Aircraft
-  { id: 10, tailNumber: 'N56789', model: 'Diamond DA40' },
-  { id: 11, tailNumber: 'N01234', model: 'Diamond DA20' },
-  { id: 12, tailNumber: 'N11223', model: 'Beechcraft Bonanza' },
-  { id: 13, tailNumber: 'N22334', model: 'Mooney M20' },
-];
 
 const COMMON_AIRPORTS = [
   // Major Airports
@@ -68,6 +44,8 @@ const COMMON_AIRPORTS = [
 
 export function CreateFlightForm({ onSuccess, onCancel }: CreateFlightFormProps) {
   const [students, setStudents] = useState<Student[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<CreateFlightPayload>>({
     studentId: undefined,
@@ -87,9 +65,11 @@ export function CreateFlightForm({ onSuccess, onCancel }: CreateFlightFormProps)
   const { user } = useAuthStore();
 
   useEffect(() => {
-    // Load students if admin or instructor
+    // Load students, instructors, and aircraft if admin or instructor
     if (user?.role === 'ADMIN' || user?.role === 'INSTRUCTOR') {
       loadStudents();
+      loadInstructors();
+      loadAircraft();
     }
   }, [user]);
 
@@ -99,6 +79,24 @@ export function CreateFlightForm({ onSuccess, onCancel }: CreateFlightFormProps)
       setStudents(data);
     } catch (error) {
       console.error('Failed to load students:', error);
+    }
+  };
+
+  const loadInstructors = async () => {
+    try {
+      const data = await getInstructors();
+      setInstructors(data);
+    } catch (error) {
+      console.error('Failed to load instructors:', error);
+    }
+  };
+
+  const loadAircraft = async () => {
+    try {
+      const data = await getAircraft();
+      setAircraft(data);
+    } catch (error) {
+      console.error('Failed to load aircraft:', error);
     }
   };
 
@@ -189,7 +187,7 @@ export function CreateFlightForm({ onSuccess, onCancel }: CreateFlightFormProps)
           error={errors.instructorId}
           options={[
             { value: '', label: 'Select an instructor' },
-            ...MOCK_INSTRUCTORS.map(i => ({ value: i.id.toString(), label: i.name })),
+            ...instructors.map(i => ({ value: i.id.toString(), label: i.name })),
           ]}
         />
 
@@ -200,7 +198,7 @@ export function CreateFlightForm({ onSuccess, onCancel }: CreateFlightFormProps)
           error={errors.aircraftId}
           options={[
             { value: '', label: 'Select an aircraft' },
-            ...MOCK_AIRCRAFT.map(a => ({ value: a.id.toString(), label: `${a.tailNumber} - ${a.model}` })),
+            ...aircraft.map(a => ({ value: a.id.toString(), label: `${a.tailNumber} - ${a.model}` })),
           ]}
         />
 

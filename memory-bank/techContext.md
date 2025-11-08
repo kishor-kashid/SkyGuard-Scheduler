@@ -193,9 +193,11 @@ flight-schedule-pro/
   - `/api/weather/*` - Weather operations (check, demo mode, scenarios, trigger-check)
   - `/api/notifications/*` - In-app notifications (get, mark read, delete, unread count)
   - `/api/students/*` - Student management (CRUD operations)
-  - `/api/instructors/*` - Instructor management (CRUD operations, admin only)
-  - `/api/aircraft/*` - Aircraft management (list, get by ID, admin only)
-  - `/api/airports/*` - Airports management (list, admin only)
+  - `/api/instructors/*` - Instructor management (list: instructors and admins, CRUD: admin only)
+  - `/api/aircraft/*` - Aircraft management (list: instructors and admins, get by ID: admin only)
+  - `/api/airports/*` - Airports management (list, authenticated users)
+  - `/api/weather/briefing` - Custom weather briefing generation (PR #27 ✅)
+  - `/api/flights/:id/weather-briefing` - Flight-specific weather briefing (PR #27 ✅)
   - `/health` - Health check endpoint
 
 ### CORS Configuration
@@ -233,9 +235,9 @@ npm run build        # Create production build
 - `bcrypt` - Password hashing
 - `node-cron` - Scheduled jobs (for PR #8)
 - `nodemailer` - Email sending (installed, not yet implemented)
-- `ai` - Vercel AI SDK (v2.2.31)
+- `ai` - Vercel AI SDK (v2.2.31) - Used for rescheduling and weather briefings
 - `@ai-sdk/openai` - OpenAI provider (v0.0.10)
-- `zod` - Schema validation (v3.22.4)
+- `zod` - Schema validation (v3.22.4) - Used for AI response validation
 - `axios` - HTTP client (for weather API)
 - `tsx` - TypeScript execution (for dev and seed scripts)
 

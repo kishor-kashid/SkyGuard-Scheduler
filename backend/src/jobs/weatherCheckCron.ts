@@ -4,6 +4,9 @@ import { checkFlightSafety } from '../services/conflictDetectionService';
 import { notifyWeatherAlert } from '../services/notificationService';
 import { FlightStatus } from '../types';
 import { logInfo, logError, logWarn } from '../utils/logger';
+import { logFlightAction } from '../services/flightHistoryService';
+import { FlightHistoryAction } from '@prisma/client';
+import { invalidateBriefingCache } from '../services/weatherBriefingService';
 
 /**
  * Run weather check for all upcoming flights (next 48 hours)
@@ -71,15 +74,48 @@ export async function runWeatherCheck(): Promise<void> {
           },
         });
 
+        // Invalidate briefing cache for this location
+        try {
+          const departureLocation = JSON.parse(flight.departureLocation);
+          invalidateBriefingCache(departureLocation);
+        } catch (error) {
+          // Log but don't fail the weather check
+          logWarn('Failed to invalidate briefing cache', { error, flightId: flight.id });
+        }
+
         // If weather is unsafe and flight is still confirmed, update status and notify
         if (!weatherCheck.isSafe && flight.status === FlightStatus.CONFIRMED) {
+          // Get admin user ID for system actions (or use null for system)
+          const adminUser = await prisma.user.findFirst({
+            where: { role: 'ADMIN' },
+            select: { id: true },
+          });
+
           // Update flight status to WEATHER_HOLD
           await prisma.flightBooking.update({
             where: { id: flight.id },
             data: {
               status: FlightStatus.WEATHER_HOLD,
+              lastModifiedBy: adminUser?.id || null,
+              version: { increment: 1 },
             },
           });
+
+          // Log status change in history
+          if (adminUser) {
+            await logFlightAction(
+              flight.id,
+              FlightHistoryAction.STATUS_CHANGED,
+              adminUser.id,
+              {
+                oldStatus: FlightStatus.CONFIRMED,
+                newStatus: FlightStatus.WEATHER_HOLD,
+                reason: weatherCheck.reason || 'Weather conflict detected',
+                violations: weatherCheck.violations,
+              },
+              'Weather conflict detected by automated check'
+            );
+          }
 
           // Send weather alert notifications to student and instructor
           await notifyWeatherAlert(flight.student.user.id, flight.id, {
@@ -100,13 +136,36 @@ export async function runWeatherCheck(): Promise<void> {
             reason: weatherCheck.reason,
           });
         } else if (weatherCheck.isSafe && flight.status === FlightStatus.WEATHER_HOLD) {
+          // Get admin user ID for system actions
+          const adminUser = await prisma.user.findFirst({
+            where: { role: 'ADMIN' },
+            select: { id: true },
+          });
+
           // If weather is now safe and flight was on hold, update back to confirmed
           await prisma.flightBooking.update({
             where: { id: flight.id },
             data: {
               status: FlightStatus.CONFIRMED,
+              lastModifiedBy: adminUser?.id || null,
+              version: { increment: 1 },
             },
           });
+
+          // Log status change in history
+          if (adminUser) {
+            await logFlightAction(
+              flight.id,
+              FlightHistoryAction.STATUS_CHANGED,
+              adminUser.id,
+              {
+                oldStatus: FlightStatus.WEATHER_HOLD,
+                newStatus: FlightStatus.CONFIRMED,
+                reason: 'Weather conditions cleared',
+              },
+              'Weather cleared by automated check'
+            );
+          }
 
           logInfo(`Weather cleared for flight ${flight.id}, status updated to CONFIRMED`, {
             flightId: flight.id,

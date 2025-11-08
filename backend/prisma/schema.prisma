@@ -23,6 +23,9 @@ model User {
   student    Student?
   instructor Instructor?
   notifications Notification[]
+  flightHistory FlightHistory[] @relation("FlightHistoryChangedBy")
+  flightNotes FlightNote[]
+  trainingHoursLogged TrainingHours[] @relation("InstructorTrainingHours") // For instructors who log hours
 
   @@map("users")
 }
@@ -47,6 +50,7 @@ model Student {
   // Relations
   user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   flights FlightBooking[]
+  trainingHours TrainingHours[]
 
   @@map("students")
 }
@@ -101,6 +105,9 @@ model FlightBooking {
   status             FlightStatus     @default(CONFIRMED)
   flightType         FlightType       @map("flight_type")
   notes              String?
+  createdBy          Int?             @map("created_by") // userId who created the flight
+  lastModifiedBy     Int?             @map("last_modified_by") // userId who last modified
+  version            Int              @default(1) // For optimistic locking
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
 
@@ -112,6 +119,9 @@ model FlightBooking {
   notifications    Notification[]
   originalReschedules RescheduleEvent[] @relation("OriginalBooking")
   newReschedules    RescheduleEvent[]    @relation("NewBooking")
+  history           FlightHistory[]
+  flightNotes       FlightNote[]
+  trainingHours     TrainingHours[]
 
   @@map("flight_bookings")
 }
@@ -192,5 +202,93 @@ enum NotificationType {
   RESCHEDULE_CONFIRMED
   FLIGHT_CONFIRMED
   FLIGHT_CANCELLED
+}
+
+// Flight History model - Audit trail for all flight changes
+model FlightHistory {
+  id        Int                @id @default(autoincrement())
+  flightId  Int                @map("flight_id")
+  action    FlightHistoryAction
+  changedBy Int                @map("changed_by") // userId
+  changes   String?             // JSON string with change details
+  notes     String?
+  timestamp DateTime           @default(now())
+
+  // Relations
+  flight    FlightBooking      @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  changedByUser User           @relation("FlightHistoryChangedBy", fields: [changedBy], references: [id], onDelete: Restrict)
+
+  @@index([flightId])
+  @@index([changedBy])
+  @@index([timestamp])
+  @@map("flight_history")
+}
+
+enum FlightHistoryAction {
+  CREATED
+  UPDATED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
+  STATUS_CHANGED
+}
+
+// Flight Notes model - Notes and debriefing system
+model FlightNote {
+  id        Int                @id @default(autoincrement())
+  flightId  Int                @map("flight_id")
+  authorId  Int                @map("author_id") // userId
+  noteType  NoteType
+  content   String
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  flight    FlightBooking      @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  author    User               @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([flightId])
+  @@index([authorId])
+  @@index([noteType])
+  @@map("flight_notes")
+}
+
+enum NoteType {
+  PRE_FLIGHT
+  POST_FLIGHT
+  DEBRIEF
+  GENERAL
+  INSTRUCTOR_NOTES
+  STUDENT_NOTES
+}
+
+// Training Hours model - Track training hours for students
+model TrainingHours {
+  id          Int                @id @default(autoincrement())
+  studentId   Int                @map("student_id")
+  flightId   Int?               @map("flight_id") // Optional - can log hours without a flight
+  hours       Decimal            @db.Decimal(5, 2) // e.g., 1.5 hours
+  category    TrainingHoursCategory
+  date        DateTime
+  instructorId Int?              @map("instructor_id")
+  notes       String?
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  student     Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  flight      FlightBooking?    @relation(fields: [flightId], references: [id], onDelete: SetNull)
+  instructor  User?              @relation("InstructorTrainingHours", fields: [instructorId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([date])
+  @@index([category])
+  @@map("training_hours")
+}
+
+enum TrainingHoursCategory {
+  GROUND
+  FLIGHT
+  SIMULATOR
 }
 

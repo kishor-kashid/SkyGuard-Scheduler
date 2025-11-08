@@ -20,7 +20,7 @@ frontend/
 ├── src/
 │   ├── components/          # React components
 │   │   ├── auth/           # Authentication components
-│   │   │   ├── LoginForm.tsx
+│   │   │   ├── LoginForm.tsx (Enhanced with icons, password toggle, remember me)
 │   │   │   └── ProtectedRoute.tsx
 │   │   ├── common/         # Reusable UI components
 │   │   │   ├── Button.tsx
@@ -36,12 +36,17 @@ frontend/
 │   │   ├── flights/        # Flight management components
 │   │   │   ├── FlightList.tsx
 │   │   │   ├── FlightCard.tsx
-│   │   │   ├── FlightDetails.tsx
-│   │   │   └── CreateFlightForm.tsx
+│   │   │   ├── FlightDetails.tsx (with Weather Briefing integration)
+│   │   │   ├── CreateFlightForm.tsx (with real API data)
+│   │   │   ├── FlightHistoryTimeline.tsx
+│   │   │   ├── FlightNotes.tsx
+│   │   │   └── TrainingHoursCard.tsx
 │   │   ├── weather/        # Weather components
 │   │   │   ├── WeatherAlertCard.tsx
 │   │   │   ├── WeatherAlertList.tsx
-│   │   │   └── WeatherScenarioSelector.tsx
+│   │   │   ├── WeatherScenarioSelector.tsx
+│   │   │   ├── WeatherBriefingCard.tsx
+│   │   │   └── WeatherBriefingModal.tsx
 │   │   ├── reschedule/     # Rescheduling components
 │   │   │   ├── RescheduleOptionsModal.tsx
 │   │   │   └── RescheduleOptionCard.tsx
@@ -53,19 +58,26 @@ frontend/
 │   │       ├── Navbar.tsx
 │   │       └── Sidebar.tsx
 │   ├── pages/              # Page components
-│   │   ├── Login.tsx
+│   │   ├── Login.tsx (Enhanced two-column layout)
 │   │   ├── Dashboard.tsx
 │   │   ├── Flights.tsx
-│   │   └── Weather.tsx
+│   │   ├── Weather.tsx
+│   │   └── FlightHistory.tsx
 │   ├── services/           # API clients
 │   │   ├── api.ts          # Axios configuration
 │   │   ├── auth.service.ts
 │   │   ├── flights.service.ts
 │   │   ├── weather.service.ts
+│   │   ├── weatherBriefing.service.ts
+│   │   ├── flightHistory.service.ts
+│   │   ├── students.service.ts
+│   │   ├── instructors.service.ts
+│   │   ├── aircraft.service.ts
 │   │   └── notifications.service.ts
 │   ├── store/              # Zustand stores
 │   │   ├── authStore.ts
 │   │   ├── flightsStore.ts
+│   │   ├── flightHistoryStore.ts
 │   │   └── notificationsStore.ts
 │   ├── hooks/              # Custom React hooks
 │   │   ├── useAuth.ts
@@ -332,10 +344,26 @@ Each API domain has a dedicated service file:
 **flights.service.ts:**
 - `getFlights(filters?)` - Get flights
 - `getFlightById(id)` - Get single flight
-- `createFlight(data)` - Create new flight
+- `createFlight(data)` - Create new flight (with validation)
 - `cancelFlight(id)` - Cancel flight
 - `getRescheduleOptions(flightId)` - Get AI options
 - `confirmReschedule(flightId, data)` - Confirm reschedule
+
+**weatherBriefing.service.ts:**
+- `generateFlightBriefing(flightId)` - Generate AI weather briefing
+- `getFlightBriefing(flightId)` - Get cached briefing
+- `generateCustomBriefing(data)` - Generate custom briefing
+
+**flightHistory.service.ts:**
+- `getFlightHistory(flightId)` - Get flight history timeline
+- `getStudentHistory(studentId, filters?)` - Get student history
+- `getInstructorHistory(instructorId, filters?)` - Get instructor history
+- `getFlightNotes(flightId)` - Get flight notes
+- `createNote(flightId, data)` - Create note
+- `updateNote(noteId, data)` - Update note
+- `deleteNote(noteId)` - Delete note
+- `logTrainingHours(flightId, data)` - Log training hours
+- `getTrainingHoursSummary(studentId)` - Get training hours summary
 
 **weather.service.ts:**
 - `getDemoScenarios()` - Get demo scenarios
@@ -515,13 +543,15 @@ Output in `dist/` directory:
 
 ## 🎨 UI/UX Highlights
 
+- **Modern Login Experience:** Two-column layout with branding panel, gradient backgrounds, input icons, password toggle, and remember me functionality
 - **Consistent Design:** Tailwind CSS utilities ensure consistency
-- **Responsive:** Mobile-first design works on all devices
+- **Responsive:** Mobile-first design works on all devices (login stacks on mobile)
 - **Loading States:** Spinners and skeletons for async operations
-- **Error Handling:** User-friendly error messages
-- **Accessibility:** Semantic HTML, ARIA labels
+- **Error Handling:** User-friendly error messages with proper validation
+- **Accessibility:** Semantic HTML, ARIA labels, keyboard navigation
 - **Visual Feedback:** Toast notifications, color-coded statuses
 - **Intuitive Navigation:** Clear role-based navigation
+- **Enhanced Forms:** Real-time validation, icon-enhanced inputs, better UX
 
 ## 📄 License
 

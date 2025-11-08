@@ -4,7 +4,7 @@ import {
   getInstructors,
   getInstructorById,
 } from '../controllers/instructors.controller';
-import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { authenticateToken, requireAdmin, requireInstructorOrAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -18,9 +18,9 @@ router.post('/', requireAdmin, createInstructor);
 /**
  * @route   GET /api/instructors
  * @desc    Get all instructors
- * @access  Private (admin only)
+ * @access  Private (instructors and admins - needed for flight creation)
  */
-router.get('/', requireAdmin, getInstructors);
+router.get('/', requireInstructorOrAdmin, getInstructors);
 
 /**
  * @route   GET /api/instructors/:id

@@ -30,16 +30,10 @@ const AIRPORTS = [
 
 /**
  * Get all airports
- * Admin only
+ * Available to all authenticated users
  */
 export async function getAirports(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = req.user;
-
-    if (user?.role !== 'ADMIN') {
-      throw new AppError('Access denied. Admin access required.', 403);
-    }
-
     res.json({
       success: true,
       data: AIRPORTS,

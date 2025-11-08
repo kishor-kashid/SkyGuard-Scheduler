@@ -47,12 +47,19 @@ Flight training schools face a critical challenge: weather-related cancellations
 4. Review 3 AI-suggested reschedule options
 5. Select preferred option with one click
 6. Receive confirmation of new flight time
+7. View complete flight history and training hours in Flight History page
+8. Access training hours summary on dashboard
+9. Add notes to flights (pre-flight, post-flight, debrief)
 
 #### For Instructors
 1. Receive notification of assigned flights
 2. View schedule in instructor dashboard
 3. Receive alerts when student flights have weather conflicts
 4. See reschedule confirmations automatically
+5. View complete flight history for all assigned flights
+6. Log training hours for students (ground, flight, simulator)
+7. Add instructor notes to flights
+8. Track student progress through training hours
 
 #### For Admins/Schedulers
 1. Create new flight bookings through admin interface
@@ -60,6 +67,10 @@ Flight training schools face a critical challenge: weather-related cancellations
 3. Monitor system metrics (bookings, conflicts, reschedules)
 4. Access demo mode to test weather scenarios
 5. Manage students and instructors
+6. View any student's complete flight history from student profile
+7. Access complete audit trail for all flight changes
+8. Monitor training hours across all students
+9. View instructor flight history
 
 ### System Behavior
 
