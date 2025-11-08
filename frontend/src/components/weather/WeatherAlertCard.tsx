@@ -1,6 +1,9 @@
 import { WeatherAlert } from '../../types';
 import { Card } from '../common/Card';
-import { AlertTriangle, Calendar, MapPin, Cloud, User } from 'lucide-react';
+import { Button } from '../common/Button';
+import { AlertTriangle, Calendar, MapPin, Cloud, User, CloudRain } from 'lucide-react';
+import { useState } from 'react';
+import { WeatherBriefingModal } from './WeatherBriefingModal';
 
 interface WeatherAlertCardProps {
   alert: WeatherAlert;
@@ -8,6 +11,7 @@ interface WeatherAlertCardProps {
 }
 
 export function WeatherAlertCard({ alert, onClick }: WeatherAlertCardProps) {
+  const [showBriefingModal, setShowBriefingModal] = useState(false);
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'high':
@@ -107,11 +111,46 @@ export function WeatherAlertCard({ alert, onClick }: WeatherAlertCardProps) {
             </div>
           )}
 
+          <div className="mt-3 flex gap-2">
+            <Button
+              variant="secondary"
+              className="text-xs py-1.5 px-3"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowBriefingModal(true);
+              }}
+            >
+              <CloudRain className="w-4 h-4 mr-1" />
+              View Briefing
+            </Button>
+            {onClick && (
+              <Button
+                variant="primary"
+                className="text-xs py-1.5 px-3"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClick();
+                }}
+              >
+                View Flight
+              </Button>
+            )}
+          </div>
+
           <div className="mt-2 text-xs text-gray-500">
             Alert generated: {new Date(alert.timestamp).toLocaleString()}
           </div>
         </div>
       </div>
+
+      {/* Weather Briefing Modal */}
+      {alert.flightId && (
+        <WeatherBriefingModal
+          isOpen={showBriefingModal}
+          onClose={() => setShowBriefingModal(false)}
+          flightId={alert.flightId}
+        />
+      )}
     </Card>
   );
 }

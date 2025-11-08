@@ -93,14 +93,14 @@ export async function createInstructor(
 
 /**
  * Get all instructors
- * Admin only
+ * Available to instructors and admins (needed for flight creation)
  */
 export async function getInstructors(req: Request, res: Response, next: NextFunction) {
   try {
     const user = req.user;
 
-    if (user?.role !== 'ADMIN') {
-      throw new AppError('Access denied. Admin access required.', 403);
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'INSTRUCTOR')) {
+      throw new AppError('Access denied. Instructor or admin access required.', 403);
     }
 
     // Get all instructors

@@ -1,4 +1,4 @@
-import { UserRole, TrainingLevel, FlightStatus, FlightType, RescheduleStatus, NotificationType } from '@prisma/client';
+import { UserRole, TrainingLevel, FlightStatus, FlightType, RescheduleStatus, NotificationType, FlightHistoryAction, NoteType, TrainingHoursCategory } from '@prisma/client';
 
 // Auth Types
 export interface LoginRequest {
@@ -257,6 +257,145 @@ export interface RescheduleContext {
   availableSlots: TimeSlot[];
 }
 
+// Flight History Types
+export interface FlightHistory {
+  id: number;
+  flightId: number;
+  action: FlightHistoryAction;
+  changedBy: number;
+  changes?: string | null;
+  notes?: string | null;
+  timestamp: Date;
+  changedByUser?: {
+    id: number;
+    email: string;
+    role: UserRole;
+  };
+}
+
+export interface FlightNote {
+  id: number;
+  flightId: number;
+  authorId: number;
+  noteType: NoteType;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  author?: {
+    id: number;
+    email: string;
+    role: UserRole;
+  };
+}
+
+export interface TrainingHours {
+  id: number;
+  studentId: number;
+  flightId?: number | null;
+  hours: number;
+  category: TrainingHoursCategory;
+  date: Date;
+  instructorId?: number | null;
+  notes?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  student?: {
+    id: number;
+    name: string;
+  };
+  flight?: {
+    id: number;
+    scheduledDate: Date;
+    status?: FlightStatus;
+  } | null;
+  instructor?: {
+    id: number;
+    email: string;
+  } | null;
+}
+
+export interface TrainingHoursSummary {
+  totalHours: number;
+  hoursByCategory: Record<TrainingHoursCategory, number>;
+  records: TrainingHours[];
+  recordCount: number;
+}
+
+export interface CreateNoteRequest {
+  noteType: NoteType;
+  content: string;
+}
+
+export interface LogTrainingHoursRequest {
+  hours: number;
+  category: TrainingHoursCategory;
+  date: string; // ISO 8601 format
+  instructorId?: number;
+  notes?: string;
+}
+
+// Weather Briefing Types
+export interface RiskAssessment {
+  level: 'LOW' | 'MODERATE' | 'HIGH' | 'SEVERE';
+  factors: string[];
+  summary: string;
+}
+
+export interface WeatherRecommendation {
+  action: 'PROCEED' | 'CAUTION' | 'DELAY' | 'CANCEL';
+  reasoning: string;
+  alternatives?: string[];
+}
+
+export interface HistoricalComparison {
+  similarConditions?: {
+    date: string;
+    conditions: string;
+    outcome: string;
+  }[];
+  trends?: string;
+  confidence: number;
+}
+
+export interface WeatherBriefing {
+  summary: string;
+  currentConditions: {
+    description: string;
+    visibility: number;
+    ceiling?: number;
+    windSpeed: number;
+    temperature: number;
+    precipitation: boolean;
+    thunderstorms: boolean;
+    icing: boolean;
+  };
+  forecast: {
+    description: string;
+    expectedChanges: string[];
+    timeRange: string;
+  };
+  riskAssessment: RiskAssessment;
+  recommendation: WeatherRecommendation;
+  historicalComparison?: HistoricalComparison;
+  confidence: number; // 0-1
+  generatedAt: Date;
+  expiresAt: Date; // For caching
+}
+
+export interface GenerateBriefingRequest {
+  location: {
+    name: string;
+    lat: number;
+    lon: number;
+  };
+  dateTime: string; // ISO 8601
+  trainingLevel: TrainingLevel;
+  flightRoute?: {
+    departure: { name: string; lat: number; lon: number };
+    destination?: { name: string; lat: number; lon: number };
+  };
+}
+
 // Re-export Prisma enums
-export { UserRole, TrainingLevel, FlightStatus, FlightType, RescheduleStatus, NotificationType };
+export { UserRole, TrainingLevel, FlightStatus, FlightType, RescheduleStatus, NotificationType, FlightHistoryAction, NoteType, TrainingHoursCategory };
 

@@ -3,16 +3,16 @@ import {
   getAircraft,
   getAircraftById,
 } from '../controllers/aircraft.controller';
-import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { authenticateToken, requireAdmin, requireInstructorOrAdmin } from '../middleware/auth';
 
 const router = Router();
 
 /**
  * @route   GET /api/aircraft
  * @desc    Get all aircraft
- * @access  Private (admin only)
+ * @access  Private (instructors and admins - needed for flight creation)
  */
-router.get('/', requireAdmin, getAircraft);
+router.get('/', requireInstructorOrAdmin, getAircraft);
 
 /**
  * @route   GET /api/aircraft/:id

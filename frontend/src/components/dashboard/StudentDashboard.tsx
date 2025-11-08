@@ -5,10 +5,11 @@ import { useAuth } from '../../hooks/useAuth';
 import { MetricsCard } from './MetricsCard';
 import { FlightList } from '../flights/FlightList';
 import { Card } from '../common/Card';
-import { Calendar, AlertTriangle, Plane, TrendingUp } from 'lucide-react';
+import { Calendar, AlertTriangle, Plane, TrendingUp, Clock } from 'lucide-react';
 import { Flight } from '../../types';
 import { Link } from 'react-router-dom';
 import { Button } from '../common/Button';
+import { TrainingHoursCard } from '../flights/TrainingHoursCard';
 
 export function StudentDashboard() {
   const { user } = useAuth();
@@ -51,6 +52,7 @@ export function StudentDashboard() {
     setUpcomingFlights(upcoming);
     setWeatherAlerts(alerts);
   }, [flights]);
+
 
   const completedFlights = flights.filter(f => f.status === 'COMPLETED').length;
   const totalFlights = flights.length;
@@ -128,15 +130,22 @@ export function StudentDashboard() {
                         {latestWeatherCheck?.reason || 'Weather conditions may affect this flight'}
                       </p>
                     </div>
-                    <Link to={`/flights`}>
-                      <Button variant="secondary">View Details</Button>
-                    </Link>
+                    <div className="flex gap-2">
+                      <Link to={`/flights`}>
+                        <Button variant="secondary" className="text-xs py-1.5 px-3">Details</Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
         </Card>
+      )}
+
+      {/* Training Hours Summary */}
+      {flights.length > 0 && flights[0].studentId && (
+        <TrainingHoursCard studentId={flights[0].studentId} showDetails={false} />
       )}
 
       {/* Quick Actions */}
@@ -150,6 +159,7 @@ export function StudentDashboard() {
           </Link>
         </div>
       </Card>
+
     </div>
   );
 }
