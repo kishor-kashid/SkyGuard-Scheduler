@@ -84,6 +84,24 @@ export async function createFlight(
       throw new AppError('Aircraft is not available at this time', 409);
     }
 
+    // Check student availability
+    const studentConflict = await prisma.flightBooking.findFirst({
+      where: {
+        studentId,
+        scheduledDate: {
+          gte: slotStart,
+          lt: slotEnd,
+        },
+        status: {
+          in: ['CONFIRMED', 'WEATHER_HOLD'],
+        },
+      },
+    });
+
+    if (studentConflict) {
+      throw new AppError('Student is not available at this time', 409);
+    }
+
     // Create flight booking
     const flight = await prisma.flightBooking.create({
       data: {
@@ -525,10 +543,11 @@ export async function generateRescheduleOptionsController(
       }
     }
 
-    // Get available slots
+    // Get available slots (including student availability check)
     const availableSlots = await generateTimeSlotsForNextWeek(
       flight.instructorId,
       flight.aircraftId,
+      flight.studentId,
       flight.id
     );
 
@@ -689,6 +708,25 @@ export async function confirmReschedule(
 
     if (aircraftConflict) {
       throw new AppError('Aircraft is not available at the selected time', 409);
+    }
+
+    // Check student availability
+    const studentConflict = await prisma.flightBooking.findFirst({
+      where: {
+        studentId: flight.studentId,
+        scheduledDate: {
+          gte: slotStart,
+          lt: slotEnd,
+        },
+        status: {
+          in: ['CONFIRMED', 'WEATHER_HOLD'],
+        },
+        id: { not: flight.id },
+      },
+    });
+
+    if (studentConflict) {
+      throw new AppError('Student is not available at the selected time', 409);
     }
 
     // Create reschedule event

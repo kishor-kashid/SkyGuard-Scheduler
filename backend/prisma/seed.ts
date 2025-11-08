@@ -86,7 +86,83 @@ async function main() {
       },
     },
   });
-  console.log('✅ Created 3 students with different training levels');
+
+  const student4User = await prisma.user.create({
+    data: {
+      email: 'david.williams@example.com',
+      passwordHash: hashedPassword,
+      role: UserRole.STUDENT,
+      student: {
+        create: {
+          name: 'David Williams',
+          phone: '+1-555-0104',
+          trainingLevel: TrainingLevel.STUDENT_PILOT,
+          availability: JSON.stringify({
+            weekdays: ['Saturday', 'Sunday'],
+            preferredTimes: ['10:00', '14:00'],
+          }),
+        },
+      },
+    },
+  });
+
+  const student5User = await prisma.user.create({
+    data: {
+      email: 'lisa.anderson@example.com',
+      passwordHash: hashedPassword,
+      role: UserRole.STUDENT,
+      student: {
+        create: {
+          name: 'Lisa Anderson',
+          phone: '+1-555-0105',
+          trainingLevel: TrainingLevel.PRIVATE_PILOT,
+          availability: JSON.stringify({
+            weekdays: ['Monday', 'Wednesday', 'Friday'],
+            preferredTimes: ['11:00', '15:00'],
+          }),
+        },
+      },
+    },
+  });
+
+  const student6User = await prisma.user.create({
+    data: {
+      email: 'robert.taylor@example.com',
+      passwordHash: hashedPassword,
+      role: UserRole.STUDENT,
+      student: {
+        create: {
+          name: 'Robert Taylor',
+          phone: '+1-555-0106',
+          trainingLevel: TrainingLevel.INSTRUMENT_RATED,
+          availability: JSON.stringify({
+            weekdays: ['Tuesday', 'Thursday', 'Saturday'],
+            preferredTimes: ['09:00', '13:00', '17:00'],
+          }),
+        },
+      },
+    },
+  });
+
+  const student7User = await prisma.user.create({
+    data: {
+      email: 'jennifer.martinez@example.com',
+      passwordHash: hashedPassword,
+      role: UserRole.STUDENT,
+      student: {
+        create: {
+          name: 'Jennifer Martinez',
+          phone: '+1-555-0107',
+          trainingLevel: TrainingLevel.STUDENT_PILOT,
+          availability: JSON.stringify({
+            weekdays: ['Monday', 'Tuesday', 'Thursday'],
+            preferredTimes: ['08:00', '12:00'],
+          }),
+        },
+      },
+    },
+  });
+  console.log('✅ Created 7 students with different training levels');
 
   // Get student records
   const students = await prisma.student.findMany({
@@ -130,7 +206,27 @@ async function main() {
       },
     },
   });
-  console.log('✅ Created 2 instructors');
+
+  const instructor3User = await prisma.user.create({
+    data: {
+      email: 'robert.wilson@flightpro.com',
+      passwordHash: hashedPassword,
+      role: UserRole.INSTRUCTOR,
+      instructor: {
+        create: {
+          name: 'Robert Wilson',
+          phone: '+1-555-0203',
+          certifications: JSON.stringify([
+            'CFI (Certified Flight Instructor)',
+            'CFII (Certified Flight Instructor Instrument)',
+            'MEI (Multi-Engine Instructor)',
+            'AGI (Advanced Ground Instructor)',
+          ]),
+        },
+      },
+    },
+  });
+  console.log('✅ Created 3 instructors');
 
   // Get instructor records
   const instructors = await prisma.instructor.findMany({
@@ -148,20 +244,100 @@ async function main() {
 
   const aircraft2 = await prisma.aircraft.create({
     data: {
-      tailNumber: 'N67890',
-      model: 'Cessna 172',
+      tailNumber: 'N11111',
+      model: 'Cessna 152',
       type: 'Single Engine',
     },
   });
 
   const aircraft3 = await prisma.aircraft.create({
     data: {
-      tailNumber: 'N11111',
+      tailNumber: 'N23456',
+      model: 'Cessna 172SP',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft4 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N34567',
+      model: 'Cessna 172R',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft5 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N45678',
+      model: 'Cessna 182',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft6 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N67890',
       model: 'Piper PA-28',
       type: 'Single Engine',
     },
   });
-  console.log('✅ Created 3 aircraft');
+
+  const aircraft7 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N78901',
+      model: 'Piper PA-28-181',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft8 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N89012',
+      model: 'Piper PA-28-161',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft9 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N90123',
+      model: 'Piper PA-44',
+      type: 'Multi Engine',
+    },
+  });
+
+  const aircraft10 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N56789',
+      model: 'Diamond DA40',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft11 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N01234',
+      model: 'Diamond DA20',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft12 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N11223',
+      model: 'Beechcraft Bonanza',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft13 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N22334',
+      model: 'Mooney M20',
+      type: 'Single Engine',
+    },
+  });
+  console.log('✅ Created 13 aircraft');
 
   // Create Flight Bookings
   const now = new Date();
@@ -317,8 +493,13 @@ async function main() {
   console.log('Student 1: sarah.johnson@example.com / password123');
   console.log('Student 2: michael.chen@example.com / password123');
   console.log('Student 3: emily.rodriguez@example.com / password123');
+  console.log('Student 4: david.williams@example.com / password123');
+  console.log('Student 5: lisa.anderson@example.com / password123');
+  console.log('Student 6: robert.taylor@example.com / password123');
+  console.log('Student 7: jennifer.martinez@example.com / password123');
   console.log('Instructor 1: john.smith@flightpro.com / password123');
   console.log('Instructor 2: jane.doe@flightpro.com / password123');
+  console.log('Instructor 3: robert.wilson@flightpro.com / password123');
 }
 
 main()

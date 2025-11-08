@@ -40,7 +40,7 @@ export function LoginForm() {
 
     setIsLoading(true);
     try {
-      await login(email, password);
+      await login({ email, password });
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error: any) {

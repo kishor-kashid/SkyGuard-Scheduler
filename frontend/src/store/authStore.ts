@@ -4,7 +4,7 @@ import { User, AuthState } from '../types';
 import * as authService from '../services/auth.service';
 
 interface AuthStore extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
@@ -18,9 +18,9 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       isAuthenticated: false,
 
-      login: async (email: string, password: string) => {
+      login: async (credentials: { email: string; password: string }) => {
         try {
-          const response = await authService.login({ email, password });
+          const response = await authService.login(credentials);
           set({
             user: response.user,
             token: response.token,

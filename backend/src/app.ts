@@ -6,6 +6,9 @@ import weatherRoutes from './routes/weather.routes';
 import flightsRoutes from './routes/flights.routes';
 import notificationsRoutes from './routes/notifications.routes';
 import studentsRoutes from './routes/students.routes';
+import instructorsRoutes from './routes/instructors.routes';
+import aircraftRoutes from './routes/aircraft.routes';
+import airportsRoutes from './routes/airports.routes';
 
 const app: Application = express();
 
@@ -38,6 +41,9 @@ app.use('/api/weather', weatherRoutes);
 app.use('/api/flights', flightsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/students', studentsRoutes);
+app.use('/api/instructors', instructorsRoutes);
+app.use('/api/aircraft', aircraftRoutes);
+app.use('/api/airports', airportsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

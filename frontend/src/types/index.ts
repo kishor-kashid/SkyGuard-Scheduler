@@ -33,6 +33,35 @@ export interface Student {
   email?: string;
 }
 
+// Instructor Types
+export interface Instructor {
+  id: number;
+  userId: number;
+  name: string;
+  phone?: string;
+  certifications?: string | string[];
+  email?: string;
+}
+
+// Aircraft Types
+export interface Aircraft {
+  id: number;
+  tailNumber: string;
+  model: string;
+  type?: string;
+  flightCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Airport Types
+export interface Airport {
+  name: string;
+  lat: number;
+  lon: number;
+  category?: 'Major' | 'Local' | 'Cross-Country';
+}
+
 // Flight Types
 export interface Flight {
   id: number;
