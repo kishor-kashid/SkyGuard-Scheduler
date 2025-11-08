@@ -1,11 +1,19 @@
 import { Router } from 'express';
 import {
+  createInstructor,
   getInstructors,
   getInstructorById,
 } from '../controllers/instructors.controller';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 
 const router = Router();
+
+/**
+ * @route   POST /api/instructors
+ * @desc    Create a new instructor
+ * @access  Private (admin only)
+ */
+router.post('/', requireAdmin, createInstructor);
 
 /**
  * @route   GET /api/instructors

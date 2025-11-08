@@ -148,20 +148,100 @@ async function main() {
 
   const aircraft2 = await prisma.aircraft.create({
     data: {
-      tailNumber: 'N67890',
-      model: 'Cessna 172',
+      tailNumber: 'N11111',
+      model: 'Cessna 152',
       type: 'Single Engine',
     },
   });
 
   const aircraft3 = await prisma.aircraft.create({
     data: {
-      tailNumber: 'N11111',
+      tailNumber: 'N23456',
+      model: 'Cessna 172SP',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft4 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N34567',
+      model: 'Cessna 172R',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft5 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N45678',
+      model: 'Cessna 182',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft6 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N67890',
       model: 'Piper PA-28',
       type: 'Single Engine',
     },
   });
-  console.log('✅ Created 3 aircraft');
+
+  const aircraft7 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N78901',
+      model: 'Piper PA-28-181',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft8 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N89012',
+      model: 'Piper PA-28-161',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft9 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N90123',
+      model: 'Piper PA-44',
+      type: 'Multi Engine',
+    },
+  });
+
+  const aircraft10 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N56789',
+      model: 'Diamond DA40',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft11 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N01234',
+      model: 'Diamond DA20',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft12 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N11223',
+      model: 'Beechcraft Bonanza',
+      type: 'Single Engine',
+    },
+  });
+
+  const aircraft13 = await prisma.aircraft.create({
+    data: {
+      tailNumber: 'N22334',
+      model: 'Mooney M20',
+      type: 'Single Engine',
+    },
+  });
+  console.log('✅ Created 13 aircraft');
 
   // Create Flight Bookings
   const now = new Date();

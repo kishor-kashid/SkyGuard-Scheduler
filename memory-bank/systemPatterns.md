@@ -182,6 +182,9 @@ Routes → Controllers → Services → Database (Prisma)
 - `/api/weather/*` - Weather operations (check, demo mode, scenarios, trigger-check)
 - `/api/notifications/*` - Notification management (get, mark read, delete, unread count)
 - `/api/students/*` - Student management (CRUD operations)
+- `/api/instructors/*` - Instructor management (CRUD operations, admin only)
+- `/api/aircraft/*` - Aircraft management (list, get by ID, admin only)
+- `/api/airports/*` - Airports management (list, admin only)
 - `/health` - Health check endpoint
 
 ### Frontend Component Hierarchy
@@ -191,20 +194,33 @@ App
 │   ├── Navbar (with NotificationBell - pending PR #15)
 │   └── Sidebar
 ├── ProtectedRoute
-│   ├── Dashboard (placeholder - PR #14 pending)
-│   │   ├── StudentDashboard (pending)
-│   │   ├── InstructorDashboard (pending)
-│   │   └── AdminDashboard (pending)
+│   ├── Dashboard (PR #14 ✅)
+│   │   ├── StudentDashboard
+│   │   ├── InstructorDashboard
+│   │   └── AdminDashboard
 │   ├── Flights Page (PR #11 ✅)
 │   │   ├── FlightList
 │   │   │   └── FlightCard
 │   │   ├── FlightDetails
 │   │   └── CreateFlightForm
-│   └── Weather Page (PR #12 ✅)
-│       ├── WeatherAlertList
-│       │   └── WeatherAlertCard
-│       ├── DemoModeToggle
-│       └── WeatherScenarioSelector
+│   ├── Weather Page (PR #12 ✅)
+│   │   ├── WeatherAlertList
+│   │   │   └── WeatherAlertCard
+│   │   ├── DemoModeToggle
+│   │   └── WeatherScenarioSelector
+│   ├── Students Page
+│   │   ├── StudentCard
+│   │   └── CreateStudentForm
+│   ├── Instructors Page (admin only)
+│   │   ├── InstructorCard
+│   │   └── CreateInstructorForm
+│   ├── Calendar Page
+│   │   └── CalendarComponent
+│   ├── Resources Page (admin only)
+│   │   ├── Aircraft Tab
+│   │   │   └── AircraftCard
+│   │   └── Airports Tab
+│   │       └── AirportCard
 │   └── Reschedule Components (PR #13 ✅)
 │       ├── RescheduleOptionsModal
 │       └── RescheduleOptionCard
