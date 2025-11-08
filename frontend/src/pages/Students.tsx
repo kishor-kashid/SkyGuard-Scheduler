@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import { getStudents } from '../services/students.service';
 import { Student } from '../types';
 import { StudentCard } from '../components/students/StudentCard';
+import { CreateStudentForm } from '../components/students/CreateStudentForm';
 import { Card } from '../components/common/Card';
+import { Button } from '../components/common/Button';
 import { Users, Search } from 'lucide-react';
 import { Input } from '../components/common/Input';
+import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 
 export function Students() {
@@ -12,6 +15,8 @@ export function Students() {
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     loadStudents();
@@ -47,11 +52,39 @@ export function Students() {
     }
   };
 
+  const isAdmin = user?.role === 'ADMIN';
+
+  if (showCreateForm) {
+    return (
+      <div>
+        <div className="mb-4">
+          <Button variant="secondary" onClick={() => setShowCreateForm(false)}>
+            ← Back to Students
+          </Button>
+        </div>
+        <CreateStudentForm
+          onSuccess={() => {
+            setShowCreateForm(false);
+            loadStudents();
+          }}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-        <p className="text-gray-600 mt-1">View and manage all students</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Students</h1>
+          <p className="text-gray-600 mt-1">View and manage all students</p>
+        </div>
+        {isAdmin && (
+          <Button variant="primary" onClick={() => setShowCreateForm(true)}>
+            Create Student
+          </Button>
+        )}
       </div>
 
       {/* Search Bar */}

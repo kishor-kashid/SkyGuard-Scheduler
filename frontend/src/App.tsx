@@ -11,6 +11,7 @@ import { Weather } from './pages/Weather';
 import { Students } from './pages/Students';
 import { Instructors } from './pages/Instructors';
 import { Calendar } from './pages/Calendar';
+import { Resources } from './pages/Resources';
 
 // Students route component - only accessible to ADMIN and INSTRUCTOR
 function StudentsRoute() {
@@ -38,6 +39,21 @@ function InstructorsRoute() {
   return (
     <Layout>
       <Instructors />
+    </Layout>
+  );
+}
+
+// Resources route component - only accessible to ADMIN
+function ResourcesRoute() {
+  const { user } = useAuthStore();
+  
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return (
+    <Layout>
+      <Resources />
     </Layout>
   );
 }
@@ -125,6 +141,15 @@ function App() {
               <Layout>
                 <Calendar />
               </Layout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/resources"
+          element={
+            <ProtectedRoute>
+              <ResourcesRoute />
             </ProtectedRoute>
           }
         />

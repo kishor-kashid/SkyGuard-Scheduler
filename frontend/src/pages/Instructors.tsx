@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { getInstructors } from '../services/instructors.service';
 import { Instructor } from '../types';
 import { InstructorCard } from '../components/instructors/InstructorCard';
+import { CreateInstructorForm } from '../components/instructors/CreateInstructorForm';
 import { Card } from '../components/common/Card';
+import { Button } from '../components/common/Button';
 import { Users, Search } from 'lucide-react';
 import { Input } from '../components/common/Input';
 import toast from 'react-hot-toast';
@@ -12,6 +14,7 @@ export function Instructors() {
   const [filteredInstructors, setFilteredInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
     loadInstructors();
@@ -55,11 +58,35 @@ export function Instructors() {
     (i) => i.certifications && (Array.isArray(i.certifications) ? i.certifications.length > 0 : true)
   ).length;
 
+  if (showCreateForm) {
+    return (
+      <div>
+        <div className="mb-4">
+          <Button variant="secondary" onClick={() => setShowCreateForm(false)}>
+            ← Back to Instructors
+          </Button>
+        </div>
+        <CreateInstructorForm
+          onSuccess={() => {
+            setShowCreateForm(false);
+            loadInstructors();
+          }}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Instructors</h1>
-        <p className="text-gray-600 mt-1">View and manage all instructors</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Instructors</h1>
+          <p className="text-gray-600 mt-1">View and manage all instructors</p>
+        </div>
+        <Button variant="primary" onClick={() => setShowCreateForm(true)}>
+          Create Instructor
+        </Button>
       </div>
 
       {/* Search Bar */}

@@ -7,6 +7,7 @@ import {
   Users, 
   UserCheck,
   Calendar,
+  Package,
   Settings 
 } from 'lucide-react';
 
@@ -48,6 +49,12 @@ const navItems: NavItem[] = [
     path: '/instructors',
     label: 'Instructors',
     icon: UserCheck,
+    roles: ['ADMIN'],
+  },
+  {
+    path: '/resources',
+    label: 'Resources',
+    icon: Package,
     roles: ['ADMIN'],
   },
   {
