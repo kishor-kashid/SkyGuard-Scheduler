@@ -61,6 +61,7 @@
 - `flightHistoryService.ts` - Flight history logging and retrieval (PR #22 ✅)
 - `flightNotesService.ts` - Flight notes CRUD operations (PR #22 ✅)
 - `trainingHoursService.ts` - Training hours logging and summary calculations (PR #22 ✅)
+- `weatherBriefingService.ts` - AI-powered weather briefing generation (PR #27 ✅)
 
 **Pattern:**
 ```typescript
@@ -115,11 +116,17 @@ const flight = await prisma.flightBooking.findUnique({
 **Flow:**
 ```
 Flight Creation/Reschedule Request
+  → Validate flightType enum
+  → Validate scheduledDate format
   → Check Student Availability
   → Check Instructor Availability
   → Check Aircraft Availability
+  → Validate Student, Instructor, and Aircraft exist in database
   → If any conflict: Return 409 error with specific message
+  → If validation fails: Return 404 error with clear message
   → If all available: Proceed with creation/reschedule
+  → Log history (graceful error handling)
+  → Send notifications (graceful error handling)
 ```
 
 **AI Reschedule Options:**
@@ -176,6 +183,12 @@ const result = await generateObject({
 - Can upgrade to `gpt-4` if needed for better reasoning
 - Zod schema ensures consistent structured output
 
+**AI Weather Briefing Pattern (PR #27 ✅):**
+- Similar pattern with `weatherBriefingSchema` for structured briefings
+- Includes risk assessment, recommendations, and historical comparisons
+- Caching with 1-hour TTL to reduce API calls
+- Cache invalidation when underlying weather data changes
+
 ### 7. Demo Mode Pattern
 **Purpose:** Test system without external API dependencies
 **Implementation:** Service layer checks demo mode flag
@@ -214,11 +227,18 @@ Routes → Controllers → Services → Database (Prisma)
 - `/api/students/*` - Student management (CRUD operations)
   - `/api/students/:id/flight-history` - Get student flight history (PR #22 ✅)
   - `/api/students/:id/training-hours` - Get training hours summary (PR #22 ✅)
-- `/api/instructors/*` - Instructor management (CRUD operations, admin only)
+- `/api/instructors/*` - Instructor management
+  - GET `/api/instructors` - List all instructors (instructors and admins - needed for flight creation)
+  - POST `/api/instructors` - Create instructor (admin only)
+  - GET `/api/instructors/:id` - Get instructor by ID (admin only)
   - `/api/instructors/:id/flight-history` - Get instructor flight history (PR #22 ✅)
 - `/api/notes/*` - Note management (update, delete) (PR #22 ✅)
-- `/api/aircraft/*` - Aircraft management (list, get by ID, admin only)
-- `/api/airports/*` - Airports management (list, admin only)
+- `/api/aircraft/*` - Aircraft management
+  - GET `/api/aircraft` - List all aircraft (instructors and admins - needed for flight creation)
+  - GET `/api/aircraft/:id` - Get aircraft by ID (admin only)
+- `/api/airports/*` - Airports management (list, authenticated users)
+- `/api/weather/briefing` - Custom weather briefing generation (PR #27 ✅)
+- `/api/flights/:id/weather-briefing` - Flight-specific weather briefing (PR #27 ✅)
 - `/health` - Health check endpoint
 
 ### Frontend Component Hierarchy
@@ -261,10 +281,13 @@ App
 │   │   ├── InstructorHistoryTimeline
 │   │   ├── FlightNotes
 │   │   └── TrainingHoursCard
-│   ├── FlightDetails (PR #23 ✅)
-│   │   ├── Details Tab
+│   ├── FlightDetails (PR #23 ✅, PR #28 ✅)
+│   │   ├── Details Tab (with Weather Briefing button)
 │   │   ├── History Tab (FlightHistoryTimeline)
 │   │   └── Notes Tab (FlightNotes)
+│   ├── Weather Briefing Components (PR #28 ✅)
+│   │   ├── WeatherBriefingCard
+│   │   └── WeatherBriefingModal
 │   └── Reschedule Components (PR #13 ✅)
 │       ├── RescheduleOptionsModal
 │       └── RescheduleOptionCard
@@ -284,6 +307,8 @@ App
   - Methods: fetchFlights, fetchFlightById, createFlight, updateFlight, cancelFlight, triggerWeatherCheck
 - `flightHistoryStore.ts` - Flight history state (history, notes, trainingHours, loading, error) (PR #23 ✅)
   - Methods: fetchHistory, fetchStudentHistory, fetchInstructorHistory, fetchNotes, createNote, updateNote, deleteNote, fetchTrainingHours, logTrainingHours
+- `weatherBriefing.service.ts` - Weather briefing API integration (PR #28 ✅)
+  - Methods: generateFlightBriefing, getFlightBriefing, generateCustomBriefing
 
 **Pattern:**
 ```typescript

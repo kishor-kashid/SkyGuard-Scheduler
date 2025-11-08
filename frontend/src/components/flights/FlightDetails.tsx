@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Flight } from '../../types';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { Calendar, MapPin, User, Plane, Cloud, AlertCircle, X, RefreshCw, FileText, Clock } from 'lucide-react';
+import { Calendar, MapPin, User, Plane, Cloud, AlertCircle, X, RefreshCw, FileText, Clock, CloudRain } from 'lucide-react';
 import { RescheduleOptionsModal } from '../reschedule/RescheduleOptionsModal';
 import { FlightHistoryTimeline } from './FlightHistoryTimeline';
 import { FlightNotes } from './FlightNotes';
+import { WeatherBriefingModal } from '../weather/WeatherBriefingModal';
 import { useAuthStore } from '../../store/authStore';
 
 interface FlightDetailsProps {
@@ -18,6 +19,7 @@ interface FlightDetailsProps {
 
 export function FlightDetails({ flight, onClose, onCancel, onCheckWeather, onRescheduleComplete }: FlightDetailsProps) {
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [showBriefingModal, setShowBriefingModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'history' | 'notes'>('details');
   const { user } = useAuthStore();
   
@@ -225,7 +227,14 @@ export function FlightDetails({ flight, onClose, onCancel, onCheckWeather, onRes
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 pt-4 border-t">
+        <div className="flex gap-2 pt-4 border-t flex-wrap">
+          <Button
+            variant="secondary"
+            onClick={() => setShowBriefingModal(true)}
+          >
+            <CloudRain className="w-4 h-4 mr-2" />
+            Weather Briefing
+          </Button>
           {canReschedule && (
             <Button
               variant="primary"
@@ -277,6 +286,13 @@ export function FlightDetails({ flight, onClose, onCancel, onCheckWeather, onRes
           onRescheduleComplete?.();
           setShowRescheduleModal(false);
         }}
+      />
+
+      {/* Weather Briefing Modal */}
+      <WeatherBriefingModal
+        isOpen={showBriefingModal}
+        onClose={() => setShowBriefingModal(false)}
+        flightId={flight.id}
       />
     </Card>
   );

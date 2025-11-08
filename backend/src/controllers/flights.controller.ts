@@ -12,7 +12,7 @@ import {
   notifyFlightCancellation,
 } from '../services/notificationService';
 import { logFlightAction } from '../services/flightHistoryService';
-import { FlightHistoryAction } from '@prisma/client';
+import { FlightHistoryAction, FlightType } from '@prisma/client';
 
 /**
  * Create a new flight booking
@@ -39,8 +39,16 @@ export async function createFlight(
       throw new AppError('Missing required fields', 400);
     }
 
+    // Validate flightType
+    if (!flightType || !Object.values(FlightType).includes(flightType as FlightType)) {
+      throw new AppError(`Invalid flightType. Must be one of: ${Object.values(FlightType).join(', ')}`, 400);
+    }
+
     // Validate scheduled date is in the future
     const scheduledDateTime = new Date(scheduledDate);
+    if (isNaN(scheduledDateTime.getTime())) {
+      throw new AppError('Invalid scheduledDate format. Use ISO 8601 format', 400);
+    }
     if (scheduledDateTime < new Date()) {
       throw new AppError('Scheduled date must be in the future', 400);
     }
@@ -104,6 +112,25 @@ export async function createFlight(
       throw new AppError('Student is not available at this time', 409);
     }
 
+    // Validate that student, instructor, and aircraft exist
+    const [student, instructor, aircraft] = await Promise.all([
+      prisma.student.findUnique({ where: { id: studentId } }),
+      prisma.instructor.findUnique({ where: { id: instructorId } }),
+      prisma.aircraft.findUnique({ where: { id: aircraftId } }),
+    ]);
+
+    if (!student) {
+      throw new AppError(`Student with ID ${studentId} not found`, 404);
+    }
+
+    if (!instructor) {
+      throw new AppError(`Instructor with ID ${instructorId} not found`, 404);
+    }
+
+    if (!aircraft) {
+      throw new AppError(`Aircraft with ID ${aircraftId} not found`, 404);
+    }
+
     // Get user ID for audit trail
     const userId = (req as any).user?.userId;
 
@@ -139,32 +166,46 @@ export async function createFlight(
 
     // Log flight creation in history
     if (userId) {
-      await logFlightAction(
-        flight.id,
-        FlightHistoryAction.CREATED,
-        userId,
-        {
-          status: flight.status,
-          scheduledDate: flight.scheduledDate.toISOString(),
-          studentId: flight.studentId,
-          instructorId: flight.instructorId,
-          aircraftId: flight.aircraftId,
-        },
-        'Flight created'
-      );
+      try {
+        await logFlightAction(
+          flight.id,
+          FlightHistoryAction.CREATED,
+          userId,
+          {
+            status: flight.status,
+            scheduledDate: flight.scheduledDate.toISOString(),
+            studentId: flight.studentId,
+            instructorId: flight.instructorId,
+            aircraftId: flight.aircraftId,
+          },
+          'Flight created'
+        );
+      } catch (historyError) {
+        // Log history error but don't fail flight creation
+        console.error('Error logging flight creation in history:', historyError);
+      }
     }
 
     // Send confirmation notifications
-    await notifyFlightConfirmation(flight.student.user.id, flight.id, {
-      scheduledDate: flight.scheduledDate,
-      departureLocation: flight.departureLocation,
-      destinationLocation: flight.destinationLocation || undefined,
-    });
-    await notifyFlightConfirmation(flight.instructor.user.id, flight.id, {
-      scheduledDate: flight.scheduledDate,
-      departureLocation: flight.departureLocation,
-      destinationLocation: flight.destinationLocation || undefined,
-    });
+    try {
+      if (flight.student?.user?.id) {
+        await notifyFlightConfirmation(flight.student.user.id, flight.id, {
+          scheduledDate: flight.scheduledDate,
+          departureLocation: flight.departureLocation,
+          destinationLocation: flight.destinationLocation || undefined,
+        });
+      }
+      if (flight.instructor?.user?.id) {
+        await notifyFlightConfirmation(flight.instructor.user.id, flight.id, {
+          scheduledDate: flight.scheduledDate,
+          departureLocation: flight.departureLocation,
+          destinationLocation: flight.destinationLocation || undefined,
+        });
+      }
+    } catch (notificationError) {
+      // Log notification error but don't fail flight creation
+      console.error('Error sending flight confirmation notifications:', notificationError);
+    }
 
     // TODO: Queue initial weather check (PR #8)
 
@@ -172,8 +213,14 @@ export async function createFlight(
       success: true,
       data: flight,
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('Error in createFlight:', error);
+    // If it's already an AppError, pass it through
+    if (error instanceof AppError) {
+      return next(error);
+    }
+    // Otherwise, wrap it in an AppError
+    next(new AppError(error.message || 'Failed to create flight', 500));
   }
 }
 
@@ -980,6 +1027,16 @@ export async function triggerWeatherCheck(req: Request, res: Response, next: Nex
         reason: weatherCheck.reason || null,
       },
     });
+
+    // Invalidate briefing cache for this location
+    try {
+      const { invalidateBriefingCache } = await import('../services/weatherBriefingService');
+      const departureLocation = JSON.parse(flight.departureLocation);
+      invalidateBriefingCache(departureLocation);
+    } catch (error) {
+      // Log but don't fail the weather check
+      console.error('Failed to invalidate briefing cache:', error);
+    }
 
     // Get user ID for audit trail
     const userId = (req as any).user?.userId;

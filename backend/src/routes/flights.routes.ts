@@ -15,6 +15,10 @@ import {
   createFlightNoteController,
   logTrainingHoursController,
 } from '../controllers/flightHistory.controller';
+import {
+  generateFlightBriefing,
+  getFlightBriefing,
+} from '../controllers/weatherBriefing.controller';
 import { authenticateToken, requireAdmin, requireInstructorOrAdmin } from '../middleware/auth';
 
 const router = Router();
@@ -32,6 +36,20 @@ router.post('/', requireInstructorOrAdmin, createFlight);
  * @access  Private (authenticated users - filtered by role)
  */
 router.get('/', authenticateToken, getFlights);
+
+/**
+ * @route   POST /api/flights/:id/weather-briefing
+ * @desc    Generate weather briefing for a flight
+ * @access  Private (authenticated users - role-based access)
+ */
+router.post('/:id/weather-briefing', authenticateToken, generateFlightBriefing);
+
+/**
+ * @route   GET /api/flights/:id/weather-briefing
+ * @desc    Get cached weather briefing for a flight
+ * @access  Private (authenticated users - role-based access)
+ */
+router.get('/:id/weather-briefing', authenticateToken, getFlightBriefing);
 
 /**
  * @route   GET /api/flights/:id/history

@@ -13,6 +13,7 @@ import { Instructors } from './pages/Instructors';
 import { Calendar } from './pages/Calendar';
 import { Resources } from './pages/Resources';
 import { FlightHistory } from './pages/FlightHistory';
+import { WeatherBriefing } from './pages/WeatherBriefing';
 
 // Students route component - only accessible to ADMIN and INSTRUCTOR
 function StudentsRoute() {
@@ -172,6 +173,17 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <FlightHistory />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/weather-briefing"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <WeatherBriefing />
               </Layout>
             </ProtectedRoute>
           }

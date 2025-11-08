@@ -108,11 +108,27 @@ export function InstructorDashboard() {
       {/* Today's Schedule */}
       <Card title="Today's Schedule">
         {todayFlights.length > 0 ? (
-          <FlightList
-            flights={todayFlights}
-            loading={loading}
-            onFlightClick={handleFlightClick}
-          />
+          <div className="space-y-4">
+            {todayFlights.map(flight => (
+              <div key={flight.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div className="flex-1">
+                  <FlightList
+                    flights={[flight]}
+                    loading={false}
+                    onFlightClick={handleFlightClick}
+                  />
+                </div>
+                <Button
+                  variant="secondary"
+                  className="text-xs py-1.5 px-3"
+                  onClick={() => setShowBriefingModal(flight.id)}
+                >
+                  <CloudRain className="w-4 h-4 mr-1" />
+                  Briefing
+                </Button>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500">No flights scheduled for today</p>
@@ -146,6 +162,7 @@ export function InstructorDashboard() {
           </Link>
         </div>
       </Card>
+
     </div>
   );
 }

@@ -53,6 +53,7 @@ export function StudentDashboard() {
     setWeatherAlerts(alerts);
   }, [flights]);
 
+
   const completedFlights = flights.filter(f => f.status === 'COMPLETED').length;
   const totalFlights = flights.length;
 
@@ -129,9 +130,11 @@ export function StudentDashboard() {
                         {latestWeatherCheck?.reason || 'Weather conditions may affect this flight'}
                       </p>
                     </div>
-                    <Link to={`/flights`}>
-                      <Button variant="secondary">View Details</Button>
-                    </Link>
+                    <div className="flex gap-2">
+                      <Link to={`/flights`}>
+                        <Button variant="secondary" className="text-xs py-1.5 px-3">Details</Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );
@@ -156,6 +159,7 @@ export function StudentDashboard() {
           </Link>
         </div>
       </Card>
+
     </div>
   );
 }

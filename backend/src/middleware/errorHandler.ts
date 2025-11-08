@@ -14,6 +14,7 @@ export function errorHandler(
   if (err instanceof AppError && err.isOperational) {
     return res.status(err.statusCode).json({
       success: false,
+      message: err.message, // Also include at top level for easier frontend access
       error: {
         message: err.message,
         statusCode: err.statusCode,
@@ -27,12 +28,15 @@ export function errorHandler(
   }
 
   // Return generic error for non-operational errors
+  const message = process.env.NODE_ENV === 'production' 
+    ? 'Internal server error' 
+    : err.message;
+  
   return res.status(500).json({
     success: false,
+    message, // Also include at top level for easier frontend access
     error: {
-      message: process.env.NODE_ENV === 'production' 
-        ? 'Internal server error' 
-        : err.message,
+      message,
       statusCode: 500,
     },
   });

@@ -6,6 +6,7 @@ import { FlightStatus } from '../types';
 import { logInfo, logError, logWarn } from '../utils/logger';
 import { logFlightAction } from '../services/flightHistoryService';
 import { FlightHistoryAction } from '@prisma/client';
+import { invalidateBriefingCache } from '../services/weatherBriefingService';
 
 /**
  * Run weather check for all upcoming flights (next 48 hours)
@@ -72,6 +73,15 @@ export async function runWeatherCheck(): Promise<void> {
             reason: weatherCheck.reason || null,
           },
         });
+
+        // Invalidate briefing cache for this location
+        try {
+          const departureLocation = JSON.parse(flight.departureLocation);
+          invalidateBriefingCache(departureLocation);
+        } catch (error) {
+          // Log but don't fail the weather check
+          logWarn('Failed to invalidate briefing cache', { error, flightId: flight.id });
+        }
 
         // If weather is unsafe and flight is still confirmed, update status and notify
         if (!weatherCheck.isSafe && flight.status === FlightStatus.CONFIRMED) {

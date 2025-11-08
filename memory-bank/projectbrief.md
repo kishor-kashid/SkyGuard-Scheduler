@@ -5,7 +5,7 @@
 - **Organization:** Flight Schedule Pro
 - **Category:** AI Solution
 - **Estimated Timeline:** 3-5 days
-- **Status:** Production Ready (87% - 20 of 23 PRs, including new Flight History feature)
+- **Status:** Production Ready (73% - 22 of 30 PRs completed: 17 original + 3 flight history PRs + 2 weather briefing PRs, with 5 new feature PRs + 3 deployment PRs remaining)
 
 ## Core Mission
 Build an intelligent, automated system that monitors weather conditions for scheduled flight lessons, detects conflicts based on student training levels, and uses AI to suggest optimal rescheduling options. The system must provide real-time notifications and maintain a comprehensive dashboard for all stakeholders.
@@ -64,9 +64,20 @@ The project is successful when:
 ### Out of Scope (Bonus Features)
 - SMS notifications
 - Google Calendar integration
-- Historical weather analytics
 - Predictive cancellation model (ML)
 - Mobile app with push notifications
+
+### Planned Future Features (from new_features_tasklist.md)
+- **Feature 2: Advanced Scheduling** (PRs 24-26) - PENDING
+  - Recurring bookings, bulk creation, templates, availability calendars
+- **Feature 3: AI Weather Briefings** (PRs 27-28) - ✅ COMPLETED
+  - Natural language briefings personalized by training level
+  - Risk assessment and recommendations
+  - Historical weather comparisons
+  - Briefing caching with cache invalidation
+  - Integrated into Flight Details page
+- **Feature 4: Smart Conflict Resolution** (PRs 29-30) - PENDING
+  - AI-powered automatic conflict detection and resolution
 
 ## Project Structure
 The project follows a monorepo structure:

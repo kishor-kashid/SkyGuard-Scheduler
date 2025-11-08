@@ -10,6 +10,7 @@ import instructorsRoutes from './routes/instructors.routes';
 import aircraftRoutes from './routes/aircraft.routes';
 import airportsRoutes from './routes/airports.routes';
 import flightHistoryRoutes from './routes/flightHistory.routes';
+import { flightBriefingRouter, customBriefingRouter } from './routes/weatherBriefing.routes';
 
 const app: Application = express();
 
@@ -46,6 +47,7 @@ app.use('/api/instructors', instructorsRoutes);
 app.use('/api/aircraft', aircraftRoutes);
 app.use('/api/airports', airportsRoutes);
 app.use('/api', flightHistoryRoutes);
+app.use('/api/weather', customBriefingRouter);
 
 // 404 handler
 app.use(notFoundHandler);

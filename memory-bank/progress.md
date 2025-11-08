@@ -3,8 +3,9 @@
 ## Current Status
 
 **Project Phase:** Production Ready - Deployment Preparation Phase
-**Last Updated:** After PR #21, #22, #23 (Flight History Feature Complete)
-**Overall Progress:** 90% (17 of 20 original PRs + 3 new feature PRs complete)
+**Last Updated:** After PR #27, #28 (AI Weather Briefing Feature Complete)
+**Overall Progress:** 73% (22 of 30 total PRs: 17 original + 3 flight history PRs + 2 weather briefing PRs complete, 5 new feature PRs + 3 deployment PRs remaining)
+**Note:** New features roadmap documented in `new_features_tasklist.md` (PRs 24-30)
 
 ## What Works
 
@@ -264,6 +265,40 @@
   - Fixed backend test issues (missing Prisma enum imports)
   - All tests passing (4 test suites, 39 tests passed)
 
+- ✅ **PR #27: AI Weather Briefing Service**
+  - Created weatherBriefingService.ts with AI-powered briefing generation
+  - Integrated with OpenAI (gpt-4o-mini) via Vercel AI SDK
+  - Zod schema for structured AI responses (weatherBriefingSchema)
+  - In-memory caching with 1-hour TTL
+  - Cache invalidation when weather checks update
+  - Historical weather data comparison
+  - Risk assessment and recommendation generation
+  - Error handling with AppError for proper error propagation
+  - Fixed Zod schema validation (ceiling field nullable)
+  - Improved error messages for missing API keys
+
+- ✅ **PR #28: Frontend - Weather Briefing UI**
+  - Created WeatherBriefingCard component with formatted display
+  - Created WeatherBriefingModal component for full-screen view
+  - Created weatherBriefing.service.ts for API integration
+  - Integrated "Weather Briefing" button into FlightDetails component
+  - Removed weather briefing from sidebar navigation
+  - Removed weather briefing from Student and Instructor dashboards
+  - Weather briefing now only accessible from flight details page
+  - Fixed duplicate useState imports
+  - Fixed authorization issues (userId vs studentId)
+  - Fixed airports endpoint authorization (authenticated users)
+
+- ✅ **Flight Creation Bug Fixes**
+  - Fixed foreign key constraint violation on flight creation
+  - Updated instructors endpoint to allow instructors and admins (was admin-only)
+  - Updated aircraft endpoint to allow instructors and admins (was admin-only)
+  - Updated CreateFlightForm to fetch real instructors and aircraft from API (removed mock data)
+  - Added validation in createFlight to check student, instructor, and aircraft exist before creation
+  - Improved error handling with better logging and graceful notification/history error handling
+  - Added flightType enum validation
+  - Added scheduledDate format validation
+
 ## New Features Implemented
 
 ### Feature 1: Flight History and Logs (PRs 21-23)
@@ -279,6 +314,45 @@
 - Admin access to student history from student profiles
 - Timeline visualization with change tracking
 - Role-based access control for all history features
+
+### Feature 3: AI-Powered Weather Briefings (PRs 27-28)
+- ✅ **PR #27:** AI Weather Briefing Service ✅
+- ✅ **PR #28:** Frontend - Weather Briefing UI ✅
+
+**Features Delivered:**
+- AI-generated natural language weather briefings
+- Personalized by training level (Student Pilot, Private Pilot, Instrument Rated)
+- Risk assessment with levels (LOW, MODERATE, HIGH, SEVERE)
+- Flight recommendations (PROCEED, CAUTION, DELAY, CANCEL)
+- Historical weather comparisons
+- Briefing caching (1-hour TTL) with automatic invalidation
+- Integration into Flight Details page
+- Weather briefing modal with full details
+- Removed from sidebar and dashboards (flight-specific only)
+
+## Planned Features (from new_features_tasklist.md)
+
+### Feature 2: Advanced Scheduling Features (PRs 24-26) - PENDING
+- Recurring bookings with templates
+- Bulk flight creation (CSV import/export)
+- Schedule templates for reuse
+- Availability calendars and preference enforcement
+- Weekly/biweekly/monthly recurring patterns
+
+### Feature 3: AI-Powered Weather Briefings (PRs 27-28) - ✅ COMPLETED
+- Natural language weather briefings personalized by training level
+- Risk assessments and recommendations
+- Historical weather comparisons
+- Briefing caching (1-hour TTL) with automatic cache invalidation
+- Integration into Flight Details page
+- Removed from sidebar and dashboards (flight-specific only)
+
+### Feature 4: Smart Conflict Resolution (PRs 29-30) - PENDING
+- Comprehensive conflict detection (double-bookings, resources, availability, weather)
+- AI-powered resolution suggestions (3+ options per conflict)
+- Batch conflict detection and resolution
+- Auto-resolve preview and application
+- Conflict severity categorization
 
 ## What's Left to Build
 
@@ -494,37 +568,70 @@ Once system is operational:
 
 ## Next Session Goals
 
-1. PR #24: Database Schema for Advanced Scheduling
+### New Features Roadmap (PRs 24-30)
+
+1. **PR #24: Database Schema for Advanced Scheduling**
    - RecurringFlightTemplate model
    - ScheduleTemplate model
    - Availability fields for Student and Instructor
    - AvailabilityBlock model
-2. PR #25: Advanced Scheduling Services
+
+2. **PR #25: Advanced Scheduling Services**
    - Recurring booking service
    - Bulk creation service
    - Template management service
    - Availability management service
-3. PR #26: Frontend - Advanced Scheduling UI
+
+3. **PR #26: Frontend - Advanced Scheduling UI**
    - Recurring booking form
    - Bulk creation interface
    - Template management UI
    - Availability calendar
-4. PR #18: AWS Deployment Preparation (Original PRs)
+
+4. **PR #27: AI Weather Briefing Service**
+   - Weather briefing generation with AI
+   - Risk assessment and recommendations
+   - Historical weather comparisons
+   - Briefing caching system
+
+5. **PR #28: Frontend - Weather Briefing UI**
+   - Weather briefing card component
+   - Briefing modal with full details
+   - Integration into FlightDetails and dashboards
+   - Standalone weather briefing page
+
+6. **PR #29: Smart Conflict Detection Service**
+   - Enhanced conflict detection (all types)
+   - AI-powered conflict resolution
+   - Batch conflict detection and resolution
+   - Auto-resolve suggestions
+
+7. **PR #30: Frontend - Smart Conflict Resolution UI**
+   - Conflict list and card components
+   - Resolution options modal
+   - Batch resolution wizard
+   - Conflicts page with statistics
+
+### Original Deployment PRs (18-20)
+
+8. **PR #18: AWS Deployment Preparation**
    - Dockerfile for backend
    - Production build config
    - Deployment documentation
    - Health check endpoint
-5. PR #19: Demo Video Preparation (Original PRs)
+
+9. **PR #19: Demo Video Preparation**
    - Demo script
    - Demo-ready seed data
    - UI polish
    - Testing demo flow
-6. PR #20: Final Deployment to AWS (Original PRs)
-   - RDS setup
-   - Backend deployment
-   - Frontend deployment (S3 + CloudFront)
-   - Production testing
-   - Demo video recording
+
+10. **PR #20: Final Deployment to AWS**
+    - RDS setup
+    - Backend deployment
+    - Frontend deployment (S3 + CloudFront)
+    - Production testing
+    - Demo video recording
 
 ## Completed Milestones
 

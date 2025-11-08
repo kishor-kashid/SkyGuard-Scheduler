@@ -214,3 +214,51 @@ export interface ApiError {
   message: string;
   statusCode?: number;
 }
+
+// Weather Briefing Types
+export interface RiskAssessment {
+  level: 'LOW' | 'MODERATE' | 'HIGH' | 'SEVERE';
+  factors: string[];
+  summary: string;
+}
+
+export interface WeatherRecommendation {
+  action: 'PROCEED' | 'CAUTION' | 'DELAY' | 'CANCEL';
+  reasoning: string;
+  alternatives?: string[];
+}
+
+export interface HistoricalComparison {
+  similarConditions?: {
+    date: string;
+    conditions: string;
+    outcome: string;
+  }[];
+  trends?: string;
+  confidence: number;
+}
+
+export interface WeatherBriefing {
+  summary: string;
+  currentConditions: {
+    description: string;
+    visibility: number;
+    ceiling?: number;
+    windSpeed: number;
+    temperature: number;
+    precipitation: boolean;
+    thunderstorms: boolean;
+    icing: boolean;
+  };
+  forecast: {
+    description: string;
+    expectedChanges: string[];
+    timeRange: string;
+  };
+  riskAssessment: RiskAssessment;
+  recommendation: WeatherRecommendation;
+  historicalComparison?: HistoricalComparison;
+  confidence: number;
+  generatedAt: string;
+  expiresAt: string;
+}
