@@ -4,7 +4,24 @@ import { meetsWeatherMinimums } from '../utils/weatherMinimums';
 import { getWeather, getWeatherForLocations } from './weatherService';
 
 /**
- * Check if a flight is safe based on weather conditions and student training level
+ * Check if a flight is safe based on current weather conditions and student training level
+ * 
+ * This is the primary function for weather conflict detection. It:
+ * 1. Retrieves the flight booking and student information from the database
+ * 2. Fetches current weather data for departure and destination locations
+ * 3. Evaluates weather against student's training level minimums
+ * 4. Returns a comprehensive safety assessment
+ * 
+ * @param {number} flightId - The ID of the flight booking to check
+ * @returns {Promise<WeatherCheckResult>} Safety assessment with isSafe flag, reason, weather data, and violations
+ * @throws {Error} If flight booking or student is not found
+ * 
+ * @example
+ * const safety = await checkFlightSafety(123);
+ * if (!safety.isSafe) {
+ *   console.log(`Unsafe: ${safety.reason}`);
+ *   console.log(`Violations: ${safety.violations.join(', ')}`);
+ * }
  */
 export async function checkFlightSafety(
   flightId: number
@@ -87,6 +104,26 @@ export async function checkFlightSafety(
 
 /**
  * Evaluate weather conditions against training level minimums
+ * 
+ * Delegates to the weatherMinimums utility to check if weather conditions
+ * are safe for a pilot at the specified training level. Each training level
+ * has different minimum requirements for visibility, ceiling, wind speed, etc.
+ * 
+ * Training Levels:
+ * - STUDENT_PILOT: Requires clear skies, high visibility (>5 mi), low winds (<10 kt)
+ * - PRIVATE_PILOT: Requires VFR minimums (visibility >3 mi, ceiling >1000 ft)
+ * - INSTRUMENT_RATED: Can fly in IMC, but no thunderstorms or icing
+ * 
+ * @param {WeatherData['conditions']} conditions - Current weather conditions to evaluate
+ * @param {TrainingLevel} trainingLevel - Student's training level (STUDENT_PILOT, PRIVATE_PILOT, or INSTRUMENT_RATED)
+ * @returns {{meets: boolean, violations: string[]}} Evaluation result with flag and list of specific violations
+ * 
+ * @example
+ * const result = evaluateWeatherAgainstMinimums(
+ *   { visibility: 4, ceiling: 1500, windSpeed: 12, ... },
+ *   'STUDENT_PILOT'
+ * );
+ * // Returns: { meets: false, violations: ['Wind speed too high (12 kt, max 10 kt)'] }
  */
 export function evaluateWeatherAgainstMinimums(
   conditions: WeatherData['conditions'],
@@ -97,6 +134,28 @@ export function evaluateWeatherAgainstMinimums(
 
 /**
  * Check weather for a specific location and training level
+ * 
+ * Simplified weather check for a single location without requiring a flight booking.
+ * Useful for:
+ * - Pre-flight planning
+ * - Testing demo scenarios
+ * - Checking weather at airports before scheduling
+ * 
+ * @param {Object} location - Location object with airport name and coordinates
+ * @param {string} location.name - Airport code or name (e.g., "KJFK")
+ * @param {number} location.lat - Latitude in decimal degrees
+ * @param {number} location.lon - Longitude in decimal degrees
+ * @param {TrainingLevel} trainingLevel - Training level to evaluate against
+ * @returns {Promise<WeatherCheckResult>} Safety assessment with weather data and violations
+ * 
+ * @example
+ * const result = await checkLocationWeather(
+ *   { name: 'KJFK', lat: 40.6413, lon: -73.7781 },
+ *   'STUDENT_PILOT'
+ * );
+ * if (!result.isSafe) {
+ *   console.log(`Not safe for student pilots: ${result.reason}`);
+ * }
  */
 export async function checkLocationWeather(
   location: { name: string; lat: number; lon: number },

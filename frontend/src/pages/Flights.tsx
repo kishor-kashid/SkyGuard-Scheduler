@@ -7,7 +7,7 @@ import { CreateFlightForm } from '../components/flights/CreateFlightForm';
 import { Button } from '../components/common/Button';
 import { Select } from '../components/common/Select';
 import { Flight, FlightStatus } from '../types';
-import { Plus, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function Flights() {
@@ -117,7 +117,6 @@ export function Flights() {
             variant="primary"
             onClick={() => setShowCreateForm(true)}
           >
-            <Plus className="w-4 h-4 mr-2" />
             Create Flight
           </Button>
         )}

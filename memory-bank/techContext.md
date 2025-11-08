@@ -193,6 +193,9 @@ flight-schedule-pro/
   - `/api/weather/*` - Weather operations (check, demo mode, scenarios, trigger-check)
   - `/api/notifications/*` - In-app notifications (get, mark read, delete, unread count)
   - `/api/students/*` - Student management (CRUD operations)
+  - `/api/instructors/*` - Instructor management (CRUD operations, admin only)
+  - `/api/aircraft/*` - Aircraft management (list, get by ID, admin only)
+  - `/api/airports/*` - Airports management (list, admin only)
   - `/health` - Health check endpoint
 
 ### CORS Configuration

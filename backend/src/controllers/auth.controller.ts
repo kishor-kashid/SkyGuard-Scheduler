@@ -90,6 +90,9 @@ export async function register(
       role: user.role,
     });
 
+    // Get name from student or instructor relation
+    const userName = (user as any).student?.name || (user as any).instructor?.name || undefined;
+
     // Return response
     res.status(201).json({
       success: true,
@@ -98,7 +101,7 @@ export async function register(
           id: user.id,
           email: user.email,
           role: user.role,
-          name: user.student?.name || user.instructor?.name || undefined,
+          name: userName,
         },
         token,
       },

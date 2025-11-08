@@ -57,7 +57,7 @@
 - `conflictDetectionService.ts` - Weather conflict evaluation logic
 - `aiService.ts` - AI-powered rescheduling generation (Vercel AI SDK with OpenAI)
 - `notificationService.ts` - In-app notification handling (email deferred)
-- `schedulingService.ts` - Availability checking and slot management
+- `schedulingService.ts` - Availability checking and slot management (student, instructor, aircraft)
 
 **Pattern:**
 ```typescript
@@ -100,7 +100,31 @@ const flight = await prisma.flightBooking.findUnique({
 6. Route handlers
 7. Error handler middleware (catch-all)
 
-### 4. Event-Driven Notification Pattern
+### 4. Comprehensive Conflict Detection Pattern
+**Purpose:** Prevent double-booking and scheduling conflicts
+**Implementation:** Three-way availability checking before flight creation/reschedule
+
+**Conflict Checks:**
+1. **Student Availability** - Checks for conflicting flights in 2-hour window
+2. **Instructor Availability** - Checks for conflicting flights in 2-hour window
+3. **Aircraft Availability** - Checks for conflicting flights in 2-hour window
+
+**Flow:**
+```
+Flight Creation/Reschedule Request
+  → Check Student Availability
+  → Check Instructor Availability
+  → Check Aircraft Availability
+  → If any conflict: Return 409 error with specific message
+  → If all available: Proceed with creation/reschedule
+```
+
+**AI Reschedule Options:**
+- Available slots pre-filtered through all three conflict checks
+- AI only receives conflict-free time slots
+- Re-validated on confirmation (in case of changes)
+
+### 5. Event-Driven Notification Pattern
 **Purpose:** Decouple notification sending from business logic
 **Implementation:** Service methods trigger notifications after state changes
 
@@ -118,7 +142,7 @@ Conflict Detected → Update Flight Status → Trigger Notification Service
 - Reschedule confirmed → Reschedule confirmation notifications
 - Flight cancelled → Cancellation notifications
 
-### 5. AI Integration Pattern
+### 6. AI Integration Pattern
 **Purpose:** Structured AI responses with validation
 **Implementation:** Vercel AI SDK with Zod schemas
 
@@ -149,7 +173,7 @@ const result = await generateObject({
 - Can upgrade to `gpt-4` if needed for better reasoning
 - Zod schema ensures consistent structured output
 
-### 6. Demo Mode Pattern
+### 7. Demo Mode Pattern
 **Purpose:** Test system without external API dependencies
 **Implementation:** Service layer checks demo mode flag
 
@@ -182,6 +206,9 @@ Routes → Controllers → Services → Database (Prisma)
 - `/api/weather/*` - Weather operations (check, demo mode, scenarios, trigger-check)
 - `/api/notifications/*` - Notification management (get, mark read, delete, unread count)
 - `/api/students/*` - Student management (CRUD operations)
+- `/api/instructors/*` - Instructor management (CRUD operations, admin only)
+- `/api/aircraft/*` - Aircraft management (list, get by ID, admin only)
+- `/api/airports/*` - Airports management (list, admin only)
 - `/health` - Health check endpoint
 
 ### Frontend Component Hierarchy
@@ -191,20 +218,33 @@ App
 │   ├── Navbar (with NotificationBell - pending PR #15)
 │   └── Sidebar
 ├── ProtectedRoute
-│   ├── Dashboard (placeholder - PR #14 pending)
-│   │   ├── StudentDashboard (pending)
-│   │   ├── InstructorDashboard (pending)
-│   │   └── AdminDashboard (pending)
+│   ├── Dashboard (PR #14 ✅)
+│   │   ├── StudentDashboard
+│   │   ├── InstructorDashboard
+│   │   └── AdminDashboard
 │   ├── Flights Page (PR #11 ✅)
 │   │   ├── FlightList
 │   │   │   └── FlightCard
 │   │   ├── FlightDetails
 │   │   └── CreateFlightForm
-│   └── Weather Page (PR #12 ✅)
-│       ├── WeatherAlertList
-│       │   └── WeatherAlertCard
-│       ├── DemoModeToggle
-│       └── WeatherScenarioSelector
+│   ├── Weather Page (PR #12 ✅)
+│   │   ├── WeatherAlertList
+│   │   │   └── WeatherAlertCard
+│   │   ├── DemoModeToggle
+│   │   └── WeatherScenarioSelector
+│   ├── Students Page
+│   │   ├── StudentCard
+│   │   └── CreateStudentForm
+│   ├── Instructors Page (admin only)
+│   │   ├── InstructorCard
+│   │   └── CreateInstructorForm
+│   ├── Calendar Page
+│   │   └── CalendarComponent
+│   ├── Resources Page (admin only)
+│   │   ├── Aircraft Tab
+│   │   │   └── AircraftCard
+│   │   └── Airports Tab
+│   │       └── AirportCard
 │   └── Reschedule Components (PR #13 ✅)
 │       ├── RescheduleOptionsModal
 │       └── RescheduleOptionCard

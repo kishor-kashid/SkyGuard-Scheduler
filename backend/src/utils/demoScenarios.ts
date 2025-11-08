@@ -1,4 +1,4 @@
-import { DemoScenario, TrainingLevel, WeatherConditions } from '../types';
+import { DemoScenario, TrainingLevel } from '../types';
 
 /**
  * Pre-built weather scenarios for demo/testing mode
