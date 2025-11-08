@@ -5,10 +5,11 @@ import { useAuth } from '../../hooks/useAuth';
 import { MetricsCard } from './MetricsCard';
 import { FlightList } from '../flights/FlightList';
 import { Card } from '../common/Card';
-import { Calendar, AlertTriangle, Plane, TrendingUp } from 'lucide-react';
+import { Calendar, AlertTriangle, Plane, TrendingUp, Clock } from 'lucide-react';
 import { Flight } from '../../types';
 import { Link } from 'react-router-dom';
 import { Button } from '../common/Button';
+import { TrainingHoursCard } from '../flights/TrainingHoursCard';
 
 export function StudentDashboard() {
   const { user } = useAuth();
@@ -137,6 +138,11 @@ export function StudentDashboard() {
             })}
           </div>
         </Card>
+      )}
+
+      {/* Training Hours Summary */}
+      {flights.length > 0 && flights[0].studentId && (
+        <TrainingHoursCard studentId={flights[0].studentId} showDetails={false} />
       )}
 
       {/* Quick Actions */}

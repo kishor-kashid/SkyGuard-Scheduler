@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, TrainingLevel, FlightStatus, FlightType, RescheduleStatus } from '@prisma/client';
+import { PrismaClient, UserRole, TrainingLevel, FlightStatus, FlightType, RescheduleStatus, FlightHistoryAction, NoteType, TrainingHoursCategory } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -7,6 +7,9 @@ async function main() {
   console.log('🌱 Starting database seed...');
 
   // Clear existing data (in reverse order of dependencies)
+  await prisma.trainingHours.deleteMany();
+  await prisma.flightNote.deleteMany();
+  await prisma.flightHistory.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.rescheduleEvent.deleteMany();
   await prisma.weatherCheck.deleteMany();
@@ -486,6 +489,239 @@ async function main() {
     },
   });
   console.log('✅ Created sample notifications');
+
+  // Create sample flight history records
+  const flights = [flight1, flight2, flight3, flight4, flight5];
+  
+  // Add history for flight1 (created, then updated)
+  await prisma.flightHistory.create({
+    data: {
+      flightId: flight1.id,
+      action: FlightHistoryAction.CREATED,
+      changedBy: adminUser.id,
+      changes: JSON.stringify({
+        status: 'CONFIRMED',
+        scheduledDate: tomorrow.toISOString(),
+        student: 'Sarah Johnson',
+        instructor: 'John Smith',
+      }),
+      notes: 'Initial flight creation',
+    },
+  });
+
+  await prisma.flightHistory.create({
+    data: {
+      flightId: flight1.id,
+      action: FlightHistoryAction.UPDATED,
+      changedBy: adminUser.id,
+      changes: JSON.stringify({
+        notes: 'Updated notes: Pattern work scheduled',
+      }),
+      notes: 'Updated flight notes',
+    },
+  });
+
+  // Add history for flight2 (created, status changed)
+  await prisma.flightHistory.create({
+    data: {
+      flightId: flight2.id,
+      action: FlightHistoryAction.CREATED,
+      changedBy: adminUser.id,
+      changes: JSON.stringify({
+        status: 'CONFIRMED',
+        scheduledDate: nextWeek.toISOString(),
+      }),
+    },
+  });
+
+  await prisma.flightHistory.create({
+    data: {
+      flightId: flight2.id,
+      action: FlightHistoryAction.STATUS_CHANGED,
+      changedBy: adminUser.id,
+      changes: JSON.stringify({
+        oldStatus: 'CONFIRMED',
+        newStatus: 'WEATHER_HOLD',
+      }),
+      notes: 'Weather conflict detected',
+    },
+  });
+
+  // Add history for flight3 (created, completed)
+  await prisma.flightHistory.create({
+    data: {
+      flightId: flight3.id,
+      action: FlightHistoryAction.CREATED,
+      changedBy: adminUser.id,
+      changes: JSON.stringify({
+        status: 'CONFIRMED',
+      }),
+    },
+  });
+
+  await prisma.flightHistory.create({
+    data: {
+      flightId: flight3.id,
+      action: FlightHistoryAction.COMPLETED,
+      changedBy: instructor2User.id,
+      changes: JSON.stringify({
+        oldStatus: 'CONFIRMED',
+        newStatus: 'COMPLETED',
+      }),
+      notes: 'Flight completed successfully',
+    },
+  });
+
+  console.log('✅ Created sample flight history records');
+
+  // Create sample flight notes
+  await prisma.flightNote.create({
+    data: {
+      flightId: flight1.id,
+      authorId: instructor1User.id,
+      noteType: NoteType.PRE_FLIGHT,
+      content: 'Pre-flight briefing completed. Student reviewed weather conditions and flight plan. All systems checked.',
+    },
+  });
+
+  await prisma.flightNote.create({
+    data: {
+      flightId: flight1.id,
+      authorId: student1User.id,
+      noteType: NoteType.STUDENT_NOTES,
+      content: 'Looking forward to practicing pattern work. Will focus on maintaining altitude and proper approach speeds.',
+    },
+  });
+
+  await prisma.flightNote.create({
+    data: {
+      flightId: flight3.id,
+      authorId: instructor2User.id,
+      noteType: NoteType.POST_FLIGHT,
+      content: 'Excellent instrument approach practice. Student demonstrated good understanding of IFR procedures. Completed 3 approaches successfully.',
+    },
+  });
+
+  await prisma.flightNote.create({
+    data: {
+      flightId: flight3.id,
+      authorId: instructor2User.id,
+      noteType: NoteType.DEBRIEF,
+      content: 'Post-flight debrief: Discussed missed approach procedures and holding patterns. Student should review IFR regulations before next flight.',
+    },
+  });
+
+  await prisma.flightNote.create({
+    data: {
+      flightId: flight2.id,
+      authorId: adminUser.id,
+      noteType: NoteType.GENERAL,
+      content: 'Flight rescheduled due to weather. New date to be determined.',
+    },
+  });
+
+  console.log('✅ Created sample flight notes');
+
+  // Create sample training hours
+  // Past training hours for students
+  const pastDate1 = new Date();
+  pastDate1.setDate(pastDate1.getDate() - 7); // 1 week ago
+
+  const pastDate2 = new Date();
+  pastDate2.setDate(pastDate2.getDate() - 14); // 2 weeks ago
+
+  const pastDate3 = new Date();
+  pastDate3.setDate(pastDate3.getDate() - 21); // 3 weeks ago
+
+  // Sarah's training hours
+  await prisma.trainingHours.create({
+    data: {
+      studentId: students[0].id, // Sarah
+      flightId: null, // Ground instruction
+      hours: 2.0,
+      category: TrainingHoursCategory.GROUND,
+      date: pastDate3,
+      instructorId: instructor1User.id,
+      notes: 'Ground school: Basic aerodynamics and flight controls',
+    },
+  });
+
+  await prisma.trainingHours.create({
+    data: {
+      studentId: students[0].id, // Sarah
+      flightId: null,
+      hours: 1.5,
+      category: TrainingHoursCategory.FLIGHT,
+      date: pastDate2,
+      instructorId: instructor1User.id,
+      notes: 'First solo flight preparation',
+    },
+  });
+
+  // Michael's training hours
+  await prisma.trainingHours.create({
+    data: {
+      studentId: students[1].id, // Michael
+      flightId: null,
+      hours: 2.5,
+      category: TrainingHoursCategory.FLIGHT,
+      date: pastDate2,
+      instructorId: instructor1User.id,
+      notes: 'Cross-country navigation practice',
+    },
+  });
+
+  await prisma.trainingHours.create({
+    data: {
+      studentId: students[1].id, // Michael
+      flightId: null,
+      hours: 1.0,
+      category: TrainingHoursCategory.SIMULATOR,
+      date: pastDate1,
+      instructorId: instructor2User.id,
+      notes: 'IFR simulator training',
+    },
+  });
+
+  // Emily's training hours (Instrument Rated)
+  await prisma.trainingHours.create({
+    data: {
+      studentId: students[2].id, // Emily
+      flightId: flight3.id, // Link to actual flight
+      hours: 2.0,
+      category: TrainingHoursCategory.FLIGHT,
+      date: pastDate1,
+      instructorId: instructor2User.id,
+      notes: 'Instrument approach practice - completed 3 approaches',
+    },
+  });
+
+  await prisma.trainingHours.create({
+    data: {
+      studentId: students[2].id, // Emily
+      flightId: null,
+      hours: 3.0,
+      category: TrainingHoursCategory.FLIGHT,
+      date: pastDate3,
+      instructorId: instructor2User.id,
+      notes: 'Advanced IFR procedures and emergency scenarios',
+    },
+  });
+
+  // David's training hours
+  await prisma.trainingHours.create({
+    data: {
+      studentId: students[3].id, // David
+      flightId: null,
+      hours: 1.5,
+      category: TrainingHoursCategory.GROUND,
+      date: pastDate2,
+      instructorId: instructor1User.id,
+      notes: 'Ground instruction: Airport operations and radio communications',
+    },
+  });
+
+  console.log('✅ Created sample training hours');
 
   console.log('\n🎉 Database seed completed successfully!');
   console.log('\n📝 Test Credentials:');

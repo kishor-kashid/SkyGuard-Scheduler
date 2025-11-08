@@ -11,6 +11,8 @@ import {
   notifyRescheduleConfirmation,
   notifyFlightCancellation,
 } from '../services/notificationService';
+import { logFlightAction } from '../services/flightHistoryService';
+import { FlightHistoryAction } from '@prisma/client';
 
 /**
  * Create a new flight booking
@@ -102,6 +104,9 @@ export async function createFlight(
       throw new AppError('Student is not available at this time', 409);
     }
 
+    // Get user ID for audit trail
+    const userId = (req as any).user?.userId;
+
     // Create flight booking
     const flight = await prisma.flightBooking.create({
       data: {
@@ -114,6 +119,8 @@ export async function createFlight(
         flightType,
         status: FlightStatus.CONFIRMED,
         notes,
+        createdBy: userId || null,
+        lastModifiedBy: userId || null,
       },
       include: {
         student: {
@@ -129,6 +136,23 @@ export async function createFlight(
         aircraft: true,
       },
     });
+
+    // Log flight creation in history
+    if (userId) {
+      await logFlightAction(
+        flight.id,
+        FlightHistoryAction.CREATED,
+        userId,
+        {
+          status: flight.status,
+          scheduledDate: flight.scheduledDate.toISOString(),
+          studentId: flight.studentId,
+          instructorId: flight.instructorId,
+          aircraftId: flight.aircraftId,
+        },
+        'Flight created'
+      );
+    }
 
     // Send confirmation notifications
     await notifyFlightConfirmation(flight.student.user.id, flight.id, {
@@ -359,6 +383,40 @@ export async function updateFlight(
       updateData.notes = req.body.notes;
     }
 
+    // Get user ID for audit trail
+    const userId = (req as any).user?.userId;
+    if (userId) {
+      updateData.lastModifiedBy = userId;
+      updateData.version = { increment: 1 }; // Optimistic locking
+    }
+
+    // Track changes for history
+    const changes: Record<string, any> = {};
+    if (updateData.scheduledDate) {
+      changes.scheduledDate = {
+        old: flight.scheduledDate.toISOString(),
+        new: updateData.scheduledDate.toISOString(),
+      };
+    }
+    if (updateData.status) {
+      changes.status = {
+        old: flight.status,
+        new: updateData.status,
+      };
+    }
+    if (updateData.flightType) {
+      changes.flightType = {
+        old: flight.flightType,
+        new: updateData.flightType,
+      };
+    }
+    if (updateData.notes !== undefined) {
+      changes.notes = {
+        old: flight.notes,
+        new: updateData.notes,
+      };
+    }
+
     const updatedFlight = await prisma.flightBooking.update({
       where: { id: parseInt(id) },
       data: updateData,
@@ -376,6 +434,18 @@ export async function updateFlight(
         aircraft: true,
       },
     });
+
+    // Log flight update in history
+    if (userId && Object.keys(changes).length > 0) {
+      const action = changes.status ? FlightHistoryAction.STATUS_CHANGED : FlightHistoryAction.UPDATED;
+      await logFlightAction(
+        updatedFlight.id,
+        action,
+        userId,
+        changes,
+        'Flight updated'
+      );
+    }
 
     res.json({
       success: true,
@@ -409,10 +479,15 @@ export async function cancelFlight(req: Request, res: Response, next: NextFuncti
       throw new AppError('Cannot cancel completed flights', 400);
     }
 
+    // Get user ID for audit trail
+    const userId = (req as any).user?.userId;
+
     const cancelledFlight = await prisma.flightBooking.update({
       where: { id: parseInt(id) },
       data: {
         status: FlightStatus.CANCELLED,
+        lastModifiedBy: userId || null,
+        version: { increment: 1 },
       },
       include: {
         student: {
@@ -428,6 +503,20 @@ export async function cancelFlight(req: Request, res: Response, next: NextFuncti
         aircraft: true,
       },
     });
+
+    // Log flight cancellation in history
+    if (userId) {
+      await logFlightAction(
+        cancelledFlight.id,
+        FlightHistoryAction.CANCELLED,
+        userId,
+        {
+          oldStatus: flight.status,
+          newStatus: FlightStatus.CANCELLED,
+        },
+        'Flight cancelled'
+      );
+    }
 
     // Send cancellation notifications
     await notifyFlightCancellation(
@@ -744,8 +833,23 @@ export async function confirmReschedule(
       where: { id: flight.id },
       data: {
         status: FlightStatus.CANCELLED,
+        lastModifiedBy: user.userId,
+        version: { increment: 1 },
       },
     });
+
+    // Log reschedule in history for original flight
+    await logFlightAction(
+      flight.id,
+      FlightHistoryAction.RESCHEDULED,
+      user.userId,
+      {
+        oldScheduledDate: flight.scheduledDate.toISOString(),
+        newScheduledDate: newScheduledDate.toISOString(),
+        reason: 'Rescheduled by student',
+      },
+      'Flight rescheduled'
+    );
 
     // Create new flight booking
     const newFlight = await prisma.flightBooking.create({
@@ -761,6 +865,8 @@ export async function confirmReschedule(
         notes: flight.notes
           ? `${flight.notes}\n\nRescheduled from flight #${flight.id}`
           : `Rescheduled from flight #${flight.id}`,
+        createdBy: user.userId,
+        lastModifiedBy: user.userId,
       },
       include: {
         student: {
@@ -786,6 +892,22 @@ export async function confirmReschedule(
         confirmedAt: new Date(),
       },
     });
+
+    // Log new flight creation in history
+    await logFlightAction(
+      newFlight.id,
+      FlightHistoryAction.CREATED,
+      user.userId,
+      {
+        status: newFlight.status,
+        scheduledDate: newFlight.scheduledDate.toISOString(),
+        studentId: newFlight.studentId,
+        instructorId: newFlight.instructorId,
+        aircraftId: newFlight.aircraftId,
+        rescheduledFrom: flight.id,
+      },
+      'New flight created from reschedule'
+    );
 
     // Send reschedule confirmation notifications
     await notifyRescheduleConfirmation(
@@ -859,14 +981,35 @@ export async function triggerWeatherCheck(req: Request, res: Response, next: Nex
       },
     });
 
+    // Get user ID for audit trail
+    const userId = (req as any).user?.userId;
+
     // Update flight status if unsafe
     if (!weatherCheck.isSafe && flight.status === 'CONFIRMED') {
       await prisma.flightBooking.update({
         where: { id: flight.id },
         data: {
           status: FlightStatus.WEATHER_HOLD,
+          lastModifiedBy: userId || null,
+          version: { increment: 1 },
         },
       });
+
+      // Log status change in history
+      if (userId) {
+        await logFlightAction(
+          flight.id,
+          FlightHistoryAction.STATUS_CHANGED,
+          userId,
+          {
+            oldStatus: FlightStatus.CONFIRMED,
+            newStatus: FlightStatus.WEATHER_HOLD,
+            reason: weatherCheck.reason || 'Weather conflict detected',
+            violations: weatherCheck.violations,
+          },
+          'Weather conflict detected by manual check'
+        );
+      }
 
       // Send weather alert notifications
       await notifyWeatherAlert(flight.student.user.id, flight.id, {

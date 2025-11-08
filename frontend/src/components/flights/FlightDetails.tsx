@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Flight } from '../../types';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { Calendar, MapPin, User, Plane, Cloud, AlertCircle, X, RefreshCw } from 'lucide-react';
+import { Calendar, MapPin, User, Plane, Cloud, AlertCircle, X, RefreshCw, FileText, Clock } from 'lucide-react';
 import { RescheduleOptionsModal } from '../reschedule/RescheduleOptionsModal';
+import { FlightHistoryTimeline } from './FlightHistoryTimeline';
+import { FlightNotes } from './FlightNotes';
 import { useAuthStore } from '../../store/authStore';
 
 interface FlightDetailsProps {
@@ -16,6 +18,7 @@ interface FlightDetailsProps {
 
 export function FlightDetails({ flight, onClose, onCancel, onCheckWeather, onRescheduleComplete }: FlightDetailsProps) {
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'notes'>('details');
   const { user } = useAuthStore();
   
   const scheduledDate = new Date(flight.scheduledDate);
@@ -51,6 +54,50 @@ export function FlightDetails({ flight, onClose, onCancel, onCheckWeather, onRes
         )}
       </div>
 
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="flex gap-4">
+          <button
+            onClick={() => setActiveTab('details')}
+            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === 'details'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Details
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === 'history'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              History
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('notes')}
+            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === 'notes'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Notes
+            </div>
+          </button>
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'details' && (
       <div className="space-y-6">
         {/* Status and Type */}
         <div className="flex items-center gap-4">
@@ -207,6 +254,19 @@ export function FlightDetails({ flight, onClose, onCancel, onCheckWeather, onRes
           )}
         </div>
       </div>
+      )}
+
+      {activeTab === 'history' && (
+        <div className="mt-4">
+          <FlightHistoryTimeline flightId={flight.id} />
+        </div>
+      )}
+
+      {activeTab === 'notes' && (
+        <div className="mt-4">
+          <FlightNotes flightId={flight.id} />
+        </div>
+      )}
 
       {/* Reschedule Options Modal */}
       <RescheduleOptionsModal

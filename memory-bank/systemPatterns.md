@@ -58,6 +58,9 @@
 - `aiService.ts` - AI-powered rescheduling generation (Vercel AI SDK with OpenAI)
 - `notificationService.ts` - In-app notification handling (email deferred)
 - `schedulingService.ts` - Availability checking and slot management (student, instructor, aircraft)
+- `flightHistoryService.ts` - Flight history logging and retrieval (PR #22 ✅)
+- `flightNotesService.ts` - Flight notes CRUD operations (PR #22 ✅)
+- `trainingHoursService.ts` - Training hours logging and summary calculations (PR #22 ✅)
 
 **Pattern:**
 ```typescript
@@ -203,10 +206,17 @@ Routes → Controllers → Services → Database (Prisma)
 - `/api/auth/*` - Authentication (login, register, getCurrentUser)
 - `/api/flights/*` - Flight management (CRUD, reschedule, weather check)
   - Reschedule endpoints restricted to students only
+  - `/api/flights/:id/history` - Get flight history (PR #22 ✅)
+  - `/api/flights/:id/notes` - Get/create flight notes (PR #22 ✅)
+  - `/api/flights/:id/training-hours` - Log training hours (PR #22 ✅)
 - `/api/weather/*` - Weather operations (check, demo mode, scenarios, trigger-check)
 - `/api/notifications/*` - Notification management (get, mark read, delete, unread count)
 - `/api/students/*` - Student management (CRUD operations)
+  - `/api/students/:id/flight-history` - Get student flight history (PR #22 ✅)
+  - `/api/students/:id/training-hours` - Get training hours summary (PR #22 ✅)
 - `/api/instructors/*` - Instructor management (CRUD operations, admin only)
+  - `/api/instructors/:id/flight-history` - Get instructor flight history (PR #22 ✅)
+- `/api/notes/*` - Note management (update, delete) (PR #22 ✅)
 - `/api/aircraft/*` - Aircraft management (list, get by ID, admin only)
 - `/api/airports/*` - Airports management (list, admin only)
 - `/health` - Health check endpoint
@@ -215,7 +225,7 @@ Routes → Controllers → Services → Database (Prisma)
 ```
 App
 ├── Layout
-│   ├── Navbar (with NotificationBell - pending PR #15)
+│   ├── Navbar (with NotificationBell - PR #15 ✅)
 │   └── Sidebar
 ├── ProtectedRoute
 │   ├── Dashboard (PR #14 ✅)
@@ -245,6 +255,16 @@ App
 │   │   │   └── AircraftCard
 │   │   └── Airports Tab
 │   │       └── AirportCard
+│   ├── Flight History Page (PR #23 ✅)
+│   │   ├── FlightHistoryTimeline
+│   │   ├── StudentHistoryTimeline
+│   │   ├── InstructorHistoryTimeline
+│   │   ├── FlightNotes
+│   │   └── TrainingHoursCard
+│   ├── FlightDetails (PR #23 ✅)
+│   │   ├── Details Tab
+│   │   ├── History Tab (FlightHistoryTimeline)
+│   │   └── Notes Tab (FlightNotes)
 │   └── Reschedule Components (PR #13 ✅)
 │       ├── RescheduleOptionsModal
 │       └── RescheduleOptionCard
@@ -262,6 +282,8 @@ App
   - Methods: login, logout, checkAuth, setUser
 - `flightsStore.ts` - Flight-related state (flights array, selectedFlight, loading, error)
   - Methods: fetchFlights, fetchFlightById, createFlight, updateFlight, cancelFlight, triggerWeatherCheck
+- `flightHistoryStore.ts` - Flight history state (history, notes, trainingHours, loading, error) (PR #23 ✅)
+  - Methods: fetchHistory, fetchStudentHistory, fetchInstructorHistory, fetchNotes, createNote, updateNote, deleteNote, fetchTrainingHours, logTrainingHours
 
 **Pattern:**
 ```typescript
@@ -334,6 +356,53 @@ Weather Conflict Detected
 **Authorization:** Reschedule options and confirmation are restricted to students only. Both endpoints verify:
 1. User role is `STUDENT`
 2. User is the student associated with the flight
+
+### Flight History Logging Flow (PR #22 ✅)
+**Purpose:** Complete audit trail for all flight operations
+**Implementation:** Automatic history logging on all flight state changes
+
+**History Logging Points:**
+```
+Flight Created
+  → logFlightAction(CREATED, flightId, userId, changes, notes)
+  → Save to FlightHistory table
+
+Flight Updated
+  → Calculate change diff (old vs new values)
+  → logFlightAction(UPDATED or STATUS_CHANGED, flightId, userId, changes, notes)
+  → Save to FlightHistory table
+
+Flight Cancelled
+  → logFlightAction(CANCELLED, flightId, userId, changes, notes)
+  → Save to FlightHistory table
+
+Flight Rescheduled
+  → logFlightAction(RESCHEDULED, originalFlightId, userId, changes, notes)
+  → logFlightAction(CREATED, newFlightId, userId, changes, notes)
+  → Save both to FlightHistory table
+
+Weather Status Change (Automated)
+  → logFlightAction(STATUS_CHANGED, flightId, systemUserId, changes, notes)
+  → Save to FlightHistory table
+```
+
+**Change Tracking:**
+- Stores JSON diff of changed fields (old → new values)
+- Tracks who made the change (changedBy userId)
+- Includes optional notes explaining the change
+- Timestamp automatically recorded
+
+**Notes System:**
+- Pre-flight, post-flight, debrief, general notes
+- Role-based access (students can't see instructor notes)
+- Full CRUD operations with authorization checks
+- Author-only editing (except admins)
+
+**Training Hours:**
+- Logged per student with category (GROUND, FLIGHT, SIMULATOR)
+- Can be linked to specific flights or standalone
+- Summary calculations (totals, by category, date ranges)
+- Instructor attribution for logged hours
 
 ## Key Technical Decisions
 

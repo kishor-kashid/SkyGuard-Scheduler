@@ -9,6 +9,12 @@ import {
   confirmReschedule,
   triggerWeatherCheck,
 } from '../controllers/flights.controller';
+import {
+  getFlightHistoryController,
+  getFlightNotesController,
+  createFlightNoteController,
+  logTrainingHoursController,
+} from '../controllers/flightHistory.controller';
 import { authenticateToken, requireAdmin, requireInstructorOrAdmin } from '../middleware/auth';
 
 const router = Router();
@@ -26,6 +32,20 @@ router.post('/', requireInstructorOrAdmin, createFlight);
  * @access  Private (authenticated users - filtered by role)
  */
 router.get('/', authenticateToken, getFlights);
+
+/**
+ * @route   GET /api/flights/:id/history
+ * @desc    Get flight history for a specific flight
+ * @access  Private (authenticated users)
+ */
+router.get('/:id/history', authenticateToken, getFlightHistoryController);
+
+/**
+ * @route   GET /api/flights/:id/notes
+ * @desc    Get notes for a flight
+ * @access  Private (authenticated users)
+ */
+router.get('/:id/notes', authenticateToken, getFlightNotesController);
 
 /**
  * @route   GET /api/flights/:id
@@ -68,6 +88,20 @@ router.post('/:id/reschedule-options', authenticateToken, generateRescheduleOpti
  * @access  Private (authenticated users)
  */
 router.post('/:id/confirm-reschedule', authenticateToken, confirmReschedule);
+
+/**
+ * @route   POST /api/flights/:id/notes
+ * @desc    Create a note for a flight
+ * @access  Private (authenticated users)
+ */
+router.post('/:id/notes', authenticateToken, createFlightNoteController);
+
+/**
+ * @route   POST /api/flights/:id/training-hours
+ * @desc    Log training hours for a flight
+ * @access  Private (instructor or admin)
+ */
+router.post('/:id/training-hours', requireInstructorOrAdmin, logTrainingHoursController);
 
 export default router;
 
