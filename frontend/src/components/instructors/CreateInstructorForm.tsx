@@ -57,7 +57,9 @@ export function CreateInstructorForm({ onSuccess, onCancel }: CreateInstructorFo
       const payload: CreateInstructorPayload = {
         ...formData,
         certifications: formData.certifications
-          ? formData.certifications.split(',').map((c) => c.trim()).filter(Boolean)
+          ? (typeof formData.certifications === 'string' 
+              ? formData.certifications.split(',').map((c: string) => c.trim()).filter(Boolean)
+              : formData.certifications)
           : undefined,
       };
 

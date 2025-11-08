@@ -2,12 +2,14 @@ import { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   children: ReactNode;
 }
 
 export function Button({
   variant = 'primary',
+  size = 'md',
   isLoading = false,
   disabled,
   children,
@@ -19,6 +21,11 @@ export function Button({
     primary: 'btn-primary',
     secondary: 'btn-secondary',
     danger: 'btn-danger',
+  };
+  const sizeClasses = {
+    sm: 'text-xs py-1.5 px-3',
+    md: 'text-sm py-2 px-4',
+    lg: 'text-base py-3 px-6',
   };
 
   const getDisabledClasses = () => {
@@ -33,7 +40,7 @@ export function Button({
 
   return (
     <button
-      className={`${baseClasses} ${variantClasses[variant]} ${getDisabledClasses()} ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${getDisabledClasses()} ${className}`}
       disabled={disabled || isLoading}
       {...props}
     >

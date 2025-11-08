@@ -13,16 +13,13 @@ This guide will help you deploy SkyGuard-Scheduler to AWS step-by-step, without 
 
 ```
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
-│   CloudFront    │──────│   S3 Bucket     │      │   EC2 Server   │
-│   (Frontend)    │      │   (Static Files)│      │   (Backend API)│
+│   S3 Bucket     │      │   EC2 Server   │      │   RDS Database  │
+│   (Frontend)    │──────│   (Backend)   │──────│   (PostgreSQL)  │
+│   (HTTP)        │      │   (Port 3000) │      │                 │
 └─────────────────┘      └─────────────────┘      └─────────────────┘
-                                                          │
-                                                          ▼
-                                                  ┌─────────────────┐
-                                                  │   RDS Database  │
-                                                  │   (PostgreSQL)  │
-                                                  └─────────────────┘
 ```
+
+**Note:** This deployment uses S3 website hosting (HTTP) for simplicity. For production with HTTPS, consider using CloudFront or an Application Load Balancer.
 
 ---
 
@@ -200,7 +197,7 @@ OPENWEATHER_API_KEY=your-openweathermap-key
 OPENAI_API_KEY=your-openai-key
 
 # Frontend URL (we'll set this after deploying frontend)
-FRONTEND_URL=https://your-cloudfront-url.cloudfront.net
+FRONTEND_URL=http://your-bucket-name.s3-website.region.amazonaws.com
 
 # Demo Mode
 DEMO_MODE=false
@@ -221,15 +218,23 @@ npx prisma generate
 npm run build
 ```
 
-### 2.8 Run Database Migrations
+### 2.8 Set Up Database Schema
 
 ```bash
-# Run migrations
+# Option 1: If you have migrations, deploy them
 npx prisma migrate deploy
+
+# Option 2: If no migrations exist or you get "No migration found" error, push schema directly
+npx prisma db push
+
+# Generate Prisma Client (if not already done)
+npx prisma generate
 
 # Seed database (optional - adds test data)
 npm run db:seed
 ```
+
+**Note**: If you see "No migration found" error, use `npx prisma db push` to sync your schema directly to the database.
 
 ### 2.9 Start the Application with PM2
 
@@ -261,7 +266,7 @@ Your backend is now running! Note your EC2 public IP - you'll need it for the fr
 
 ---
 
-## Step 3: Deploy Frontend (S3 + CloudFront)
+## Step 3: Deploy Frontend (S3 Website Hosting)
 
 ### 3.1 Build Frontend Locally
 
@@ -344,66 +349,57 @@ This creates a `dist/` folder with your static files.
 aws s3 sync frontend/dist/ s3://skyguard-scheduler-frontend --delete
 ```
 
-### 3.6 Create CloudFront Distribution
+### 3.6 Get Your S3 Website URL
 
-1. Go to **AWS Console** → **CloudFront** → **Create distribution**
+After enabling static website hosting, you'll get a website endpoint URL:
 
-2. Settings:
-   - **Origin domain**: Select your S3 bucket
-   - **Origin access**: Use website endpoint
-   - **Viewer protocol policy**: **Redirect HTTP to HTTPS**
-   - **Default root object**: `index.html`
-   - **Price class**: Use all edge locations (or cheapest for testing)
+1. Go to your S3 bucket → **Properties** tab
+2. Scroll to **Static website hosting**
+3. Copy the **Bucket website endpoint** URL
+   - Format: `http://your-bucket-name.s3-website.region.amazonaws.com`
+   - Example: `http://skyguard-scheduler-frontend.s3-website.us-east-2.amazonaws.com`
 
-3. Click **Create distribution**
-4. Wait 15-20 minutes for deployment
+### 3.7 Update Frontend API URL and Rebuild
 
-### 3.7 Configure CloudFront Error Pages
-
-1. Go to your CloudFront distribution → **Error pages** tab
-2. Click **Create custom error response**
-
-3. For 403 errors:
-   - **HTTP error code**: 403
-   - **Response page path**: `/index.html`
-   - **HTTP response code**: 200
-   - Click **Create**
-
-4. Repeat for 404 errors (same settings)
-
-### 3.8 Update Frontend API URL
-
-After CloudFront is ready:
-
-1. Update `frontend/.env.production`:
+1. Create `frontend/.env.production` file on your local machine:
    ```env
    VITE_API_URL=http://YOUR_EC2_PUBLIC_IP:3000/api
    ```
+   Replace `YOUR_EC2_PUBLIC_IP` with your actual EC2 public IP.
 
-2. Rebuild and re-upload:
+2. Rebuild the frontend:
    ```bash
+   cd frontend
    npm run build
-   aws s3 sync frontend/dist/ s3://skyguard-scheduler-frontend --delete
    ```
 
-3. Invalidate CloudFront cache:
-   - Go to CloudFront → Your distribution → **Invalidations** tab
-   - Click **Create invalidation**
-   - Enter: `/*`
-   - Click **Create invalidation**
+3. Re-upload to S3:
+   ```bash
+   # Using AWS CLI
+   aws s3 sync frontend/dist/ s3://skyguard-scheduler-frontend --delete
+   
+   # Or using AWS Console: Upload all files from frontend/dist/ folder
+   ```
 
-### 3.9 Update Backend CORS
+### 3.8 Update Backend CORS
 
 On your EC2 server:
 ```bash
 # Edit .env file
 nano ~/SkyGuard-Scheduler/backend/.env
 
-# Update FRONTEND_URL with your CloudFront URL
-FRONTEND_URL=https://d1234567890abc.cloudfront.net
+# Update FRONTEND_URL with your S3 website URL
+# Get this from S3 bucket → Properties → Static website hosting
+FRONTEND_URL=http://skyguard-scheduler-frontend.s3-website.us-east-2.amazonaws.com
+
+# Make sure there are no extra characters (no trailing ~ or spaces)
+# Save and exit (Ctrl+X, then Y, then Enter)
 
 # Restart the app
 pm2 restart skyguard-backend
+
+# Verify it's running
+pm2 logs skyguard-backend --lines 20
 ```
 
 ---
@@ -415,8 +411,9 @@ pm2 restart skyguard-backend
    - Should see: `{"success":true,...}`
 
 2. **Test Frontend**:
-   - Visit your CloudFront URL: `https://d1234567890abc.cloudfront.net`
+   - Visit your S3 website URL: `http://your-bucket-name.s3-website.region.amazonaws.com`
    - Should see the login page
+   - **Note**: Browser may show "Not Secure" warning (this is normal for HTTP)
 
 3. **Test Login**:
    - Use test account: `admin@flightpro.com` / `password123`
@@ -463,8 +460,9 @@ pm2 restart skyguard-backend
 1. **Change default passwords** in production
 2. **Use strong JWT_SECRET** (at least 32 random characters)
 3. **Restrict security groups** - only allow necessary ports
-4. **Use HTTPS** (CloudFront provides this automatically)
+4. **For production**: Consider using HTTPS (Application Load Balancer with SSL or CloudFront)
 5. **Never commit `.env` files** to Git
+6. **CORS**: Make sure `FRONTEND_URL` in backend `.env` exactly matches your S3 website URL (no trailing characters)
 
 ---
 
@@ -472,11 +470,10 @@ pm2 restart skyguard-backend
 
 - **EC2 t3.micro**: Free for 12 months (750 hours/month)
 - **RDS db.t3.micro**: Free for 12 months (750 hours/month)
-- **S3**: First 5GB free
-- **CloudFront**: First 1TB free
+- **S3**: First 5GB storage free, first 20,000 GET requests free
 - **Total**: ~$0/month for first year (if within free tier limits)
 
-After free tier: ~$15-30/month
+After free tier: ~$10-20/month (without CloudFront, which would add ~$5-10/month)
 
 ---
 
@@ -498,8 +495,10 @@ sudo netstat -tulpn | grep 3000
 
 ### Frontend shows errors:
 - Check browser console (F12)
-- Verify API URL in `.env.production`
-- Check CORS settings in backend
+- Verify API URL in `.env.production` matches your EC2 IP
+- Check CORS settings in backend - ensure `FRONTEND_URL` exactly matches S3 website URL
+- **Mixed Content Error**: If you see HTTPS/HTTP mixed content errors, ensure both frontend and backend use the same protocol (HTTP in this setup)
+- **CORS Error**: Check backend `.env` file - `FRONTEND_URL` should have no trailing characters (no `~`, spaces, etc.)
 
 ### Can't SSH to EC2:
 - Verify security group allows SSH from your IP
@@ -512,9 +511,33 @@ sudo netstat -tulpn | grep 3000
 
 Your application should now be live on AWS! 
 
-- **Frontend**: `https://your-cloudfront-url.cloudfront.net`
+- **Frontend**: `http://your-bucket-name.s3-website.region.amazonaws.com`
 - **Backend API**: `http://your-ec2-ip:3000/api`
 - **Health Check**: `http://your-ec2-ip:3000/health`
 
+**Note**: Your frontend is served over HTTP. For production with HTTPS, consider:
+- Using an Application Load Balancer with SSL certificate
+- Using CloudFront with SSL
+- Using a custom domain with SSL certificate
+
 If you need help, check the logs with `pm2 logs` on your EC2 server.
+
+---
+
+## 🔄 Updating Your Application
+
+### Update Frontend:
+
+1. Make changes to your frontend code locally
+2. Update `frontend/.env.production` if API URL changed
+3. Rebuild: `npm run build` (in frontend folder)
+4. Upload: `aws s3 sync frontend/dist/ s3://your-bucket-name --delete`
+
+### Update Backend:
+
+1. On EC2: `cd ~/SkyGuard-Scheduler/backend`
+2. Pull latest code: `git pull` (if using Git)
+3. Install dependencies: `npm install`
+4. Build: `npm run build`
+5. Restart: `pm2 restart skyguard-backend`
 

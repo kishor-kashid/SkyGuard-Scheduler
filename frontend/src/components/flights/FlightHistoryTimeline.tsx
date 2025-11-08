@@ -72,7 +72,7 @@ export function FlightHistoryTimeline({ flightId }: FlightHistoryTimelineProps) 
     return action.replace('_', ' ').toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const parseChanges = (changes: string | null) => {
+  const parseChanges = (changes: string | null | undefined) => {
     if (!changes) return null;
     try {
       return JSON.parse(changes);

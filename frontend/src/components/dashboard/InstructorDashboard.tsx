@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { MetricsCard } from './MetricsCard';
 import { FlightList } from '../flights/FlightList';
 import { Card } from '../common/Card';
-import { Calendar, Users, Clock, AlertCircle } from 'lucide-react';
+import { Calendar, Users, Clock, AlertCircle, CloudRain } from 'lucide-react';
 import { Flight } from '../../types';
 import { Link } from 'react-router-dom';
 import { Button } from '../common/Button';
@@ -17,6 +17,7 @@ export function InstructorDashboard() {
   const [todayFlights, setTodayFlights] = useState<Flight[]>([]);
   const [weekFlights, setWeekFlights] = useState<Flight[]>([]);
   const [uniqueStudents, setUniqueStudents] = useState<Set<number>>(new Set());
+  const [showBriefingModal, setShowBriefingModal] = useState<number | null>(null);
 
   const handleFlightClick = (flight: Flight) => {
     setSelectedFlight(flight);
