@@ -10,6 +10,7 @@ export async function getAvailableSlots(
   endDate: Date,
   instructorId: number,
   aircraftId: number,
+  studentId?: number,
   excludeFlightId?: number
 ): Promise<TimeSlot[]> {
   const slots: TimeSlot[] = [];
@@ -28,6 +29,7 @@ export async function getAvailableSlots(
       currentDate,
       instructorId,
       aircraftId,
+      studentId,
       excludeFlightId
     );
 
@@ -51,6 +53,7 @@ async function isSlotAvailable(
   dateTime: Date,
   instructorId: number,
   aircraftId: number,
+  studentId?: number,
   excludeFlightId?: number
 ): Promise<{ available: boolean; reason?: string }> {
   // Check instructor availability
@@ -77,6 +80,21 @@ async function isSlotAvailable(
       available: false,
       reason: `Aircraft: ${aircraftAvailable.reason}`,
     };
+  }
+
+  // Check student availability (if studentId provided)
+  if (studentId) {
+    const studentAvailable = await checkStudentAvailability(
+      dateTime,
+      studentId,
+      excludeFlightId
+    );
+    if (!studentAvailable.available) {
+      return {
+        available: false,
+        reason: `Student: ${studentAvailable.reason}`,
+      };
+    }
   }
 
   return { available: true };
@@ -159,6 +177,44 @@ export async function checkAircraftAvailability(
 }
 
 /**
+ * Check if student is available at a specific time
+ */
+export async function checkStudentAvailability(
+  dateTime: Date,
+  studentId: number,
+  excludeFlightId?: number
+): Promise<{ available: boolean; reason?: string }> {
+  // Calculate slot start and end (2 hour window)
+  const slotStart = new Date(dateTime);
+  const slotEnd = new Date(dateTime);
+  slotEnd.setHours(slotEnd.getHours() + 2);
+
+  // Check for conflicting flights
+  const conflictingFlight = await prisma.flightBooking.findFirst({
+    where: {
+      studentId,
+      scheduledDate: {
+        gte: slotStart,
+        lt: slotEnd,
+      },
+      status: {
+        in: ['CONFIRMED', 'WEATHER_HOLD'],
+      },
+      ...(excludeFlightId && { id: { not: excludeFlightId } }),
+    },
+  });
+
+  if (conflictingFlight) {
+    return {
+      available: false,
+      reason: `Student has a conflicting flight at ${conflictingFlight.scheduledDate.toISOString()}`,
+    };
+  }
+
+  return { available: true };
+}
+
+/**
  * Get student availability preferences
  */
 export async function getStudentAvailability(studentId: number): Promise<{
@@ -187,6 +243,7 @@ export async function getStudentAvailability(studentId: number): Promise<{
 export async function generateTimeSlotsForNextWeek(
   instructorId: number,
   aircraftId: number,
+  studentId?: number,
   excludeFlightId?: number
 ): Promise<TimeSlot[]> {
   const startDate = new Date();
@@ -196,6 +253,6 @@ export async function generateTimeSlotsForNextWeek(
   endDate.setDate(endDate.getDate() + 7); // 7 days from now
   endDate.setHours(18, 0, 0, 0); // End at 6 PM
 
-  return getAvailableSlots(startDate, endDate, instructorId, aircraftId, excludeFlightId);
+  return getAvailableSlots(startDate, endDate, instructorId, aircraftId, studentId, excludeFlightId);
 }
 

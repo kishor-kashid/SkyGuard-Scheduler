@@ -200,6 +200,36 @@
     - Frontend services, components, and routing
     - Navigation link in Sidebar (admin only)
 
+- ✅ **Conflict Detection Enhancement**
+  - **Student Availability Checking:**
+    - Added `checkStudentAvailability()` function to scheduling service
+    - Student conflict checking added to `createFlight` controller
+    - Student conflict checking added to `confirmReschedule` controller
+    - Updated `isSlotAvailable()` to include student availability check
+    - Updated `getAvailableSlots()` to accept and use studentId parameter
+    - Updated `generateTimeSlotsForNextWeek()` to include student availability
+    - AI reschedule options now pre-filtered for student conflicts
+  - **Complete Conflict Detection:**
+    - All three resources (student, instructor, aircraft) checked at flight creation
+    - All three resources checked at reschedule confirmation
+    - Pre-filtered available slots for AI rescheduling include all conflict checks
+    - Returns HTTP 409 with specific error messages for each conflict type
+
+- ✅ **Seed Data & Documentation Updates**
+  - **Seed Data Expansion:**
+    - Added 4 more students (total 7 students):
+      - David Williams (Student Pilot, weekend availability)
+      - Lisa Anderson (Private Pilot)
+      - Robert Taylor (Instrument Rated)
+      - Jennifer Martinez (Student Pilot)
+    - Added 1 more instructor (total 3 instructors):
+      - Robert Wilson (CFI, CFII, MEI, AGI certifications)
+  - **Documentation:**
+    - Added comprehensive Docker setup instructions to README
+    - Expanded troubleshooting section with Docker-specific issues
+    - Fixed database credentials in README to match docker-compose.yml
+    - Updated test accounts section with all 7 students and 3 instructors
+
 ## What's Left to Build
 
 ### Phase 1: Foundation (PRs 1-3)
@@ -212,7 +242,7 @@
 - [x] **PR #2:** Database Schema & Prisma Setup ✅
   - Prisma schema with all models (User, Student, Instructor, FlightBooking, WeatherCheck, RescheduleEvent, Notification, Aircraft)
   - Enums defined (UserRole, TrainingLevel, FlightStatus, FlightType, RescheduleStatus, NotificationType)
-  - Seed script with test data (3 students, 2 instructors, 3 aircraft, 5 flights)
+  - Seed script with test data (7 students, 3 instructors, 13 aircraft, 5 flights)
   - Database configuration file created
   - Prisma Client generated
   - Migration ready (requires database to be running)
@@ -247,6 +277,7 @@
   - AI reschedule endpoints
   - Manual weather check trigger
   - Request validation middleware
+  - Complete conflict detection (student, instructor, aircraft availability)
 
 - [x] **PR #7:** In-App Notification System ✅ (Email notifications deferred)
   - Notification service and controller
@@ -326,6 +357,18 @@
   - Resources page for admin (aircraft and airports)
   - Backend API endpoints for resources
   - Frontend services and components
+
+- [x] **Conflict Detection Enhancement** ✅
+  - Student availability checking added
+  - Complete three-way conflict detection (student, instructor, aircraft)
+  - AI reschedule options pre-filtered for conflicts
+  - Updated scheduling service functions
+
+- [x] **Seed Data & Documentation Updates** ✅
+  - Added 4 more students (total 7)
+  - Added 1 more instructor (total 3)
+  - Comprehensive Docker instructions in README
+  - Updated test accounts documentation
 
 - [ ] **PR #18:** AWS Deployment Preparation
   - Dockerfile for backend
@@ -440,4 +483,12 @@ Once system is operational:
   - Expanded airports and aircraft data
   - Resources management page for admin
   - Backend API endpoints for resources
+- [x] Conflict Detection Enhancement
+  - Complete three-way conflict detection (student, instructor, aircraft)
+  - Student availability checking added
+  - AI reschedule options pre-filtered for conflicts
+- [x] Seed Data & Documentation Updates
+  - Added 4 more students (total 7) and 1 more instructor (total 3)
+  - Comprehensive Docker instructions in README
+  - Updated test accounts documentation
 

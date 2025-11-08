@@ -48,6 +48,28 @@
   - Demo video recording
 
 ## Recent Changes
+- **Conflict Detection Enhancement:**
+  - Added student availability checking to flight creation (`createFlight`)
+  - Added student availability checking to reschedule confirmation (`confirmReschedule`)
+  - Created `checkStudentAvailability()` function in scheduling service
+  - Updated `isSlotAvailable()` to check student, instructor, and aircraft availability
+  - Updated `getAvailableSlots()` and `generateTimeSlotsForNextWeek()` to include student availability checks
+  - AI-generated reschedule options now pre-filtered for student conflicts
+  - All three conflict checks (student, instructor, aircraft) now enforced at creation and reschedule
+- **Seed Data Expansion:**
+  - Added 4 more students to seed file (total 7 students):
+    - David Williams (Student Pilot, weekend availability)
+    - Lisa Anderson (Private Pilot)
+    - Robert Taylor (Instrument Rated)
+    - Jennifer Martinez (Student Pilot)
+  - Added 1 more instructor (total 3 instructors):
+    - Robert Wilson (CFI, CFII, MEI, AGI certifications)
+  - Updated README with all new test account credentials
+- **Documentation Improvements:**
+  - Added comprehensive Docker instructions to README
+  - Expanded troubleshooting section with Docker-specific issues
+  - Fixed database credentials in README to match docker-compose.yml
+  - Added Docker management commands (start, stop, restart, logs, verify)
 - **UI Enhancements:**
   - Removed Plus icons from all buttons across the UI (Flights, Students, Instructors pages)
   - Cleaner button design with text-only labels
@@ -302,13 +324,16 @@ None at this time - project is ready to begin implementation.
 - **Backend Progress:** 9 of 20 PRs complete - all backend services done
 - **Frontend Progress:** 6 of 6 frontend PRs complete (PRs 10-15) + UI enhancements
 - **Testing Progress:** PR #16 complete - comprehensive test suite
-- **Documentation Progress:** PR #17 complete - full documentation
+- **Documentation Progress:** PR #17 complete - full documentation + Docker instructions
+- **Conflict Detection:** Complete - all three checks (student, instructor, aircraft) enforced at creation and reschedule
+- **Seed Data:** 7 students (3 Student Pilot, 2 Private Pilot, 2 Instrument Rated) and 3 instructors
 - **UI Enhancements:** Plus icons removed from buttons, Resources page added for admin
 - **Data Expansion:** 16 airports and 13 aircraft now available (seed file updated)
 - **Resources Management:** Admin-only page for viewing aircraft and airports with search and statistics
+- **Docker Documentation:** Comprehensive setup and troubleshooting guide added to README
 - **Demo Mode:** Successfully implemented and working - critical for testing without API costs
 - **Training Level Weather Minimums:** Fully implemented and tested in conflict detection
-- **AI Rescheduling:** Working with gpt-4o-mini, generates 3 structured options
+- **AI Rescheduling:** Working with gpt-4o-mini, generates 3 structured options, pre-filtered for all conflicts
 - **Reschedule Authorization:** Restricted to students only (backend + frontend enforcement)
 - **Notifications:** In-app system fully functional, integrated into all workflows with polling
 - **Email Notifications:** Deferred - can be added later without breaking changes
@@ -316,7 +341,7 @@ None at this time - project is ready to begin implementation.
 - **State Management:** Zustand stores working well for auth, flights, and notifications
 - **UI Components:** Complete reusable component library (Button, Input, Card, Select, Modal, MetricsCard, AircraftCard, AirportCard)
 - **Testing:** Backend (Jest) and Frontend (Vitest) test suites complete and passing
-- **Documentation:** Comprehensive READMEs and API documentation complete
+- **Documentation:** Comprehensive READMEs, API documentation, and Docker setup guide complete
 
 ## Workflow Reminders
 - Follow PR-based development approach

@@ -86,14 +86,48 @@ cd SkyGuard-Scheduler
 ```
 
 #### 2. Start PostgreSQL with Docker
+
+**Prerequisites:**
+- Docker Desktop must be installed and running
+- Ensure port 5432 is not already in use
+
+**Start the database:**
 ```bash
 docker-compose up -d
 ```
 
 This will start PostgreSQL on port 5432 with the following default credentials:
-- Database: `skyguard_db`
-- Username: `skyguard_user`
-- Password: `skyguard_password`
+- Database: `flight_schedule_db`
+- Username: `flight_user`
+- Password: `flight_password`
+- Port: `5432`
+
+**Verify Docker container is running:**
+```bash
+docker ps
+```
+
+You should see a container named `flight-schedule-db` running.
+
+**View Docker logs (if needed):**
+```bash
+docker-compose logs -f postgres
+```
+
+**Stop the database:**
+```bash
+docker-compose down
+```
+
+**Stop and remove volumes (⚠️ This will delete all data):**
+```bash
+docker-compose down -v
+```
+
+**Restart the database:**
+```bash
+docker-compose restart
+```
 
 #### 3. Setup Backend
 ```bash
@@ -108,7 +142,7 @@ cp .env.template .env
 
 Edit `backend/.env` with your configuration:
 ```env
-DATABASE_URL="postgresql://skyguard_user:skyguard_password@localhost:5432/skyguard_db"
+DATABASE_URL="postgresql://flight_user:flight_password@localhost:5432/flight_schedule_db"
 JWT_SECRET="your-super-secret-jwt-key-change-this"
 JWT_EXPIRES_IN="24h"
 PORT=3000
@@ -185,10 +219,19 @@ After running the seed script, you can log in with these test accounts:
   - Training Level: Private Pilot
 - Email: `emily.rodriguez@example.com` / `password123`
   - Training Level: Instrument Rated
+- Email: `david.williams@example.com` / `password123`
+  - Training Level: Student Pilot
+- Email: `lisa.anderson@example.com` / `password123`
+  - Training Level: Private Pilot
+- Email: `robert.taylor@example.com` / `password123`
+  - Training Level: Instrument Rated
+- Email: `jennifer.martinez@example.com` / `password123`
+  - Training Level: Student Pilot
 
 **Instructor Accounts:**
 - Email: `john.smith@flightpro.com` / `password123`
 - Email: `jane.doe@flightpro.com` / `password123`
+- Email: `robert.wilson@flightpro.com` / `password123`
 
 ### Additional Tools
 
@@ -294,19 +337,75 @@ Tests include:
 ## 🐛 Troubleshooting
 
 ### Database Connection Issues
-```bash
-# Check if PostgreSQL is running
-docker ps
 
-# Restart PostgreSQL
-docker-compose down
+**Check if Docker container is running:**
+```bash
+docker ps
+```
+
+If the container is not running:
+```bash
+# Start the database
 docker-compose up -d
 
-# Reset database
+# Check logs for errors
+docker-compose logs postgres
+```
+
+**Restart PostgreSQL:**
+```bash
+docker-compose restart
+```
+
+**Complete reset (⚠️ This will delete all data):**
+```bash
+# Stop and remove containers and volumes
+docker-compose down -v
+
+# Start fresh
+docker-compose up -d
+
+# Wait a few seconds for PostgreSQL to initialize, then run migrations
+cd backend
+npx prisma migrate dev
+npx prisma db seed
+```
+
+**Reset database without removing Docker volumes:**
+```bash
 cd backend
 npx prisma migrate reset
 npx prisma db seed
 ```
+
+**Common Docker Issues:**
+
+1. **Port 5432 already in use:**
+   ```bash
+   # Find what's using the port
+   # Windows:
+   netstat -ano | findstr :5432
+   # Linux/Mac:
+   lsof -i :5432
+   
+   # Stop the conflicting service or change port in docker-compose.yml
+   ```
+
+2. **Docker container won't start:**
+   ```bash
+   # Check Docker Desktop is running
+   # View detailed logs
+   docker-compose logs postgres
+   
+   # Remove and recreate
+   docker-compose down -v
+   docker-compose up -d
+   ```
+
+3. **Database connection refused:**
+   - Ensure Docker container is running: `docker ps`
+   - Wait 10-15 seconds after starting container for PostgreSQL to initialize
+   - Verify DATABASE_URL in `backend/.env` matches docker-compose.yml credentials
 
 ### Port Already in Use
 ```bash
